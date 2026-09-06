@@ -1,7 +1,7 @@
 import { FIREBASE_ENV, missingFirebaseEnv } from "@/lib/firebase";
 
 // Affiché à la place de l'application quand Firebase ne peut pas démarrer
-// (variables REACT_APP_FIREBASE_* absentes au moment du build).
+// (variables FIREBASE_* absentes au moment du build).
 export default function SetupRequired() {
   return (
     <div data-testid="setup-required" className="min-h-screen bg-[#111111] text-white flex items-center justify-center p-6">
@@ -14,8 +14,8 @@ export default function SetupRequired() {
         <p className="mt-4 text-sm text-zinc-400">
           Le site a été compilé sans les variables d'environnement Firebase. Ajoutez-les dans
           <span className="text-white"> Vercel → Settings → Environment Variables</span> (environnement <em>Production</em>,
-          et <em>Preview</em> si besoin), puis <span className="text-white">redéployez</span> : Create React App n'injecte
-          ces valeurs qu'au moment du build.
+          et <em>Preview</em> si besoin), puis <span className="text-white">redéployez</span> : ces valeurs ne sont
+          injectées qu'au moment du build.
         </p>
 
         <ul className="mt-6 grid gap-1.5 font-mono text-xs">

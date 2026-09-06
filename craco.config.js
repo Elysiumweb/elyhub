@@ -1,6 +1,30 @@
 // craco.config.js
 const path = require("path");
+const webpack = require("webpack");
 require("dotenv").config();
+
+// Variables d'environnement exposées au code client SANS le préfixe REACT_APP_.
+// Create React App n'inline que les variables `REACT_APP_*` : pour utiliser des
+// noms « nus » (FIREBASE_API_KEY, …) on les injecte nous-mêmes via DefinePlugin.
+// ⚠️ Toute variable listée ici est embarquée dans le bundle public : n'y mettre
+// que des valeurs destinées au navigateur (la config Firebase web l'est).
+const CLIENT_ENV_VARS = [
+  "FIREBASE_API_KEY",
+  "FIREBASE_AUTH_DOMAIN",
+  "FIREBASE_PROJECT_ID",
+  "FIREBASE_STORAGE_BUCKET",
+  "FIREBASE_MESSAGING_SENDER_ID",
+  "FIREBASE_APP_ID",
+  "FIREBASE_MEASUREMENT_ID",
+  "ADMIN_UID",
+];
+
+const clientEnvDefinitions = Object.fromEntries(
+  CLIENT_ENV_VARS.map((name) => [
+    `process.env.${name}`,
+    JSON.stringify(process.env[name] || ""),
+  ]),
+);
 
 // Check if we're in development/preview mode (not production build)
 // Craco sets NODE_ENV=development for start, NODE_ENV=production for build
@@ -97,6 +121,12 @@ let webpackConfig = {
             '**/public/**',
         ],
       };
+
+      // Expose the non-prefixed env vars to the client bundle.
+      // CRA's own DefinePlugin only knows `process.env.REACT_APP_*`; a second
+      // DefinePlugin with the exact keys `process.env.FIREBASE_*` is merged
+      // by webpack, so both sets of variables stay available.
+      webpackConfig.plugins.push(new webpack.DefinePlugin(clientEnvDefinitions));
 
       // Add health check plugin to webpack if enabled
       if (config.enableHealthCheck && healthPluginInstance) {
