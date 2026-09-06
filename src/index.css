@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 6.7%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 9.4%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 9.4%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 47 52% 68%;
+    --primary-foreground: 0 0% 6.7%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.1;
+    --input: 0 0% 100% / 0.12;
+    --ring: 47 52% 68%;
+    --radius: 2px;
+    --gold: #D8CA82;
+  }
+  * { @apply border-border; }
+  html { color-scheme: dark; }
+  body {
+    @apply bg-[#111111] text-white;
+    font-family: 'Manrope', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: rgba(216, 202, 130, 0.35); color: #fff; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; }
+  ::-webkit-scrollbar-thumb:hover { background: #D8CA82; }
+}
+
+@layer components {
+  .font-display { font-family: 'Unbounded', 'Manrope', sans-serif; }
+  .bg-pattern {
+    background-color: #111111;
+    background-image: radial-gradient(ellipse at top, rgba(216, 202, 130, 0.06), transparent 55%);
+  }
+  .eyebrow { @apply text-[10px] font-semibold uppercase tracking-[0.25em] text-[#D8CA82]; }
+  .label { @apply block text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400 mb-1.5; }
+  .badge { @apply inline-flex items-center gap-1 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider leading-4 whitespace-nowrap; }
+
+  .card-elysium {
+    @apply bg-[#181818] border border-white/10 transition-[border-color,transform,box-shadow] duration-200;
+  }
+  a.card-elysium:hover, .card-elysium.hoverable:hover {
+    @apply border-[#D8CA82]/50 -translate-y-0.5;
+    box-shadow: 0 8px 30px -12px rgba(216, 202, 130, 0.25);
+  }
+  .card-official {
+    @apply bg-[#1C1910] border-[#D8CA82]/70;
+    box-shadow: 0 0 0 1px rgba(216, 202, 130, 0.25), 0 10px 40px -20px rgba(216, 202, 130, 0.5);
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 h-10 px-5 bg-[#D8CA82] text-[#111111] text-sm font-bold uppercase tracking-wider transition-[background-color,transform,box-shadow] duration-150 hover:bg-[#E5D792] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 h-10 px-4 border border-[#D8CA82]/50 text-[#D8CA82] text-sm font-semibold uppercase tracking-wider transition-colors hover:bg-[#D8CA82]/10 hover:border-[#D8CA82] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 h-9 px-3 text-zinc-300 text-sm font-medium transition-colors hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 h-10 px-4 border border-red-500/40 text-red-400 text-sm font-semibold uppercase tracking-wider transition-colors hover:bg-red-500/10 disabled:opacity-50;
+  }
+
+  .input-elysium {
+    @apply w-full h-10 bg-[#141414] border border-white/10 px-3 text-sm text-white placeholder:text-zinc-600 outline-none transition-colors focus:border-[#D8CA82]/70;
+  }
+  textarea.input-elysium { @apply h-auto py-2 min-h-[96px]; }
+  .select-elysium {
+    @apply h-8 bg-[#141414] border border-white/10 px-2 pr-7 text-xs text-white outline-none focus:border-[#D8CA82]/70 appearance-none cursor-pointer shrink-0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23D8CA82' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+  }
+  select.input-elysium { @apply appearance-none cursor-pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23D8CA82' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+
+  .nav-link { @apply px-3 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-zinc-400 border-b-2 border-transparent transition-colors hover:text-white; }
+  .nav-link-active { @apply text-[#D8CA82] border-[#D8CA82]; }
+
+  .skeleton { @apply bg-[#181818] border border-white/5 relative overflow-hidden; }
+  .skeleton::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(216,202,130,0.06), transparent);
+    animation: shimmer 1.4s infinite;
+  }
+  .tab-btn { @apply px-4 h-10 text-xs font-semibold uppercase tracking-wider text-zinc-400 border-b-2 border-transparent hover:text-white transition-colors; }
+  .tab-btn-active { @apply text-[#D8CA82] border-[#D8CA82]; }
+  .section-title { @apply font-display text-xs uppercase tracking-[0.2em] text-zinc-300 flex items-center gap-2 mb-3; }
+  .section-title::before { content: "<"; color: #D8CA82; }
+  .section-title::after { content: ">"; color: #D8CA82; }
+
+  .animate-in { animation: fadeUp .35s ease-out both; }
+  .stagger > * { animation: fadeUp .4s ease-out both; }
+  .stagger > *:nth-child(2) { animation-delay: .05s; } .stagger > *:nth-child(3) { animation-delay: .1s; }
+  .stagger > *:nth-child(4) { animation-delay: .15s; } .stagger > *:nth-child(5) { animation-delay: .2s; }
+  .stagger > *:nth-child(n+6) { animation-delay: .25s; }
+}
+
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+[data-debug-wrapper="true"] { display: contents !important; }
