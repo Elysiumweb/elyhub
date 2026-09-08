@@ -1,6 +1,6 @@
 import {
   doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, getDocs,
-  arrayUnion, arrayRemove, orderBy, limit, writeBatch,
+  arrayUnion, arrayRemove, orderBy, limit, writeBatch, increment, deleteDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { ADMIN_UID } from "./constants";
@@ -76,12 +76,17 @@ export const findOrCreateConversation = async ({ me, other, teamId, teamName, ti
   });
   return ref.id;
 };
-export const sendMessage = async (convId, sender, text) => {
+export const sendMessage = async (convId, sender, text, participantIds = []) => {
   await addDoc(collection(db, "conversations", convId, "messages"), { senderId: sender.id, senderName: sender.pseudo, text, createdAt: now() });
-  await updateDoc(doc(db, "conversations", convId), { lastMessage: text.slice(0, 120), lastAt: now(), lastSenderId: sender.id });
+  const unread = Object.fromEntries(participantIds.filter((p) => p !== sender.id).map((p) => [`unread.${p}`, increment(1)]));
+  await updateDoc(doc(db, "conversations", convId), { lastMessage: text.slice(0, 120), lastAt: now(), lastSenderId: sender.id, ...unread });
 };
+export const markRead = (convId, uid) => updateDoc(doc(db, "conversations", convId), { [`unread.${uid}`]: 0 });
 export const toggleBlock = (convId, uid, blocked) =>
   updateDoc(doc(db, "conversations", convId), { blockedBy: blocked ? arrayRemove(uid) : arrayUnion(uid) });
+export const deleteDocById = (col, id) => deleteDoc(doc(db, col, id));
+export const unregisterTeamFromTournament = (tid, teamEntry) =>
+  updateDoc(doc(db, "tournaments", tid), { registeredTeamIds: arrayRemove(teamEntry.id), registeredTeams: arrayRemove(teamEntry) });
 export const reportConversation = (convId, uid, reason) =>
   addDoc(collection(db, "reports"), { conversationId: convId, reportedBy: uid, reason, createdAt: now() });
 
@@ -174,3 +179,5 @@ export const createLft = (data, profile) =>
 export const updateLft = (id, data) => updateDoc(doc(db, "lft", id), data);
 
 export const recentQuery = (col, n = 100) => query(collection(db, col), orderBy("createdAt", "desc"), limit(n));
+export const updateTournamentStatus = (id, status) => updateDoc(doc(db, "tournaments", id), { status, updatedAt: now() });
+export const updateTournament = (id, data) => updateDoc(doc(db, "tournaments", id), { ...data, updatedAt: now() });

@@ -1,10 +1,8 @@
-// Nom court ADMIN_UID injecté par CLIENT_ENV_VARS (craco.config.js) ;
-// version REACT_APP_ADMIN_UID standard prioritaire.
-export const ADMIN_UID =
-  process.env.REACT_APP_ADMIN_UID || process.env.ADMIN_UID || "Yztk8XFHteYwiwTGCfpnp71lmql1";
+export const ADMIN_UID = process.env.REACT_APP_ADMIN_UID;
 
 export const REGIONS = ["EU", "NA", "ASIA", "LATAM", "OCE", "MENA"];
 export const LANGUAGES = ["fr", "en", "de", "es", "pt", "it"];
+export const LEVELS = ["amateur", "semi-pro", "pro"];
 export const SCRIM_FORMATS = ["BO1", "BO2", "BO3", "BO5", "BO7", "Custom"];
 export const TOURNAMENT_FORMATS = ["single_elim", "round_robin", "swiss"];
 
@@ -36,8 +34,8 @@ export const STATUS_STYLES = {
   played: "bg-zinc-500/20 text-zinc-300 border-zinc-500/40",
   cancelled: "bg-red-500/15 text-red-400 border-red-500/30",
   closed: "bg-zinc-500/20 text-zinc-300 border-zinc-500/40",
-  full: "bg-red-500/15 text-red-400 border-red-500/30",
   upcoming: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  full: "bg-red-500/15 text-red-400 border-red-500/30",
   registration: "bg-blue-500/15 text-blue-400 border-blue-500/30",
   ongoing: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   finished: "bg-zinc-500/20 text-zinc-300 border-zinc-500/40",

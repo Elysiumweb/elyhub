@@ -27,8 +27,8 @@ export default function MyApplications() {
           {list.map((a) => (
             <Link key={a.id} to={`/offers/${a.offerId}`} data-testid={`application-item-${a.id}`} className="card-elysium p-4 flex flex-wrap items-center gap-4">
               <div className="flex-1 min-w-[200px]">
-                <div className="font-display text-sm uppercase text-white">{a.offerRole} <span className="text-zinc-500 font-sans normal-case text-xs">@ {a.teamName}</span></div>
-                <div className="mt-1 flex items-center gap-2 text-xs text-zinc-500"><GameBadge game={getGame(a.gameId)} /><span>{formatDate(a.createdAt, true)}</span></div>
+                <div className="font-display text-sm uppercase text-white">{a.offerRole} <span className="text-zinc-400 font-sans normal-case text-xs">@ {a.teamName}</span></div>
+                <div className="mt-1 flex items-center gap-2 text-xs text-zinc-400"><GameBadge game={getGame(a.gameId)} /><span>{formatDate(a.createdAt, true)}</span></div>
               </div>
               <StatusBadge status={a.status} />
             </Link>

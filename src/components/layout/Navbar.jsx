@@ -1,6 +1,8 @@
 import { Link, NavLink } from "react-router-dom";
-import { MessageSquare, LogOut, User, LayoutDashboard, ShieldCheck, Menu } from "lucide-react";
+import { MessageSquare, LogOut, User, LayoutDashboard, ShieldCheck, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { where } from "firebase/firestore";
+import { useCollection } from "@/hooks/useFirestore";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
 import { Avatar } from "@/components/common/Cards";
@@ -18,6 +20,8 @@ export const Navbar = () => {
   const { user, profile, isAdmin, logout } = useAuth();
   const { t, lang, setLang } = useI18n();
   const [open, setOpen] = useState(false);
+  const convs = useCollection("conversations", [where("participantIds", "array-contains", user?.uid || "-")], [user?.uid], !!user);
+  const unread = convs.data.reduce((n, c) => n + (c.unread?.[user?.uid] || 0), 0);
 
   const NavItems = ({ onClick }) => (<>
     {links.map((l) => (
@@ -36,11 +40,11 @@ export const Navbar = () => {
         </Link>
         <nav className="hidden md:flex items-center gap-1 flex-1"><NavItems /></nav>
         <div className="ml-auto flex items-center gap-2">
-          <button data-testid="lang-toggle" onClick={() => setLang(lang === "fr" ? "en" : "fr")} className="btn-ghost text-xs font-display tracking-widest px-2">
-            <span className={lang === "fr" ? "text-[#D8CA82]" : "text-zinc-500"}>FR</span><span className="text-zinc-700 mx-1">/</span><span className={lang === "en" ? "text-[#D8CA82]" : "text-zinc-500"}>EN</span>
+          <button data-testid="lang-toggle" onClick={() => setLang(lang === "fr" ? "en" : "fr")} aria-label={lang === "fr" ? "Switch to English" : "Passer en français"} className="btn-ghost text-xs font-display tracking-widest px-2">
+            <span className={lang === "fr" ? "text-[#D8CA82]" : "text-zinc-400"}>FR</span><span className="text-zinc-400 mx-1" aria-hidden="true">/</span><span className={lang === "en" ? "text-[#D8CA82]" : "text-zinc-400"}>EN</span>
           </button>
           {user && (
-            <Link to="/messages" data-testid="nav-messages" className="btn-ghost h-9 w-9 p-0 grid place-items-center"><MessageSquare className="h-4 w-4" /></Link>
+            <Link to="/messages" data-testid="nav-messages" aria-label={`${t("nav_messages")}${unread ? ` (${unread})` : ""}`} className="btn-ghost h-9 w-9 p-0 grid place-items-center relative"><MessageSquare className="h-4 w-4" aria-hidden="true" />{unread > 0 && <span data-testid="nav-unread-badge" className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-[#D8CA82] text-[#111111] text-[10px] font-bold grid place-items-center">{unread > 99 ? "99+" : unread}</span>}</Link>
           )}
           {user ? (
             <DropdownMenu>
@@ -61,10 +65,10 @@ export const Navbar = () => {
           ) : (
             <Link to="/login" data-testid="nav-login" className="btn-gold text-xs">{t("login")}</Link>
           )}
-          <button data-testid="nav-mobile-toggle" className="md:hidden btn-ghost h-9 w-9 p-0 grid place-items-center" onClick={() => setOpen(!open)}><Menu className="h-4 w-4" /></button>
+          <button data-testid="nav-mobile-toggle" aria-label={t("menu")} aria-expanded={open} aria-controls="mobile-nav" className="md:hidden btn-ghost h-9 w-9 p-0 grid place-items-center" onClick={() => setOpen(!open)}>{open ? <X className="h-4 w-4" aria-hidden="true" /> : <Menu className="h-4 w-4" aria-hidden="true" />}</button>
         </div>
       </div>
-      {open && <nav className="md:hidden flex flex-col p-3 gap-1 border-t border-white/10 bg-[#111111]"><NavItems onClick={() => setOpen(false)} /></nav>}
+      {open && <nav id="mobile-nav" className="md:hidden flex flex-col p-3 gap-1 border-t border-white/10 bg-[#111111]"><NavItems onClick={() => setOpen(false)} /></nav>}
     </header>
   );
 };

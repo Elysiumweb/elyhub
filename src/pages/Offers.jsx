@@ -14,6 +14,8 @@ import { RankSelect } from "@/components/common/RankSelect";
 import { GameBadge, OfficialBadge, StatusBadge } from "@/components/common/Badges";
 import { Avatar } from "@/components/common/Cards";
 import NotFound from "./NotFound";
+import { Seo, offerLd } from "@/components/common/Seo";
+import { ConfirmButton } from "@/components/common/ConfirmButton";
 
 export function OfferCreate() {
   const { teamId } = useParams();
@@ -36,7 +38,7 @@ export function OfferCreate() {
   const g = team ? getGame(team.gameId) : null;
   return (
     <div className="max-w-3xl">
-      <PageTitle eyebrow={t("recruitment")} title={t("create_offer")}>{team && <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400"><span>{team.name}</span><span className="text-zinc-600">·</span><GameBadge game={g} size="lg" /></div>}</PageTitle>
+      <PageTitle eyebrow={t("recruitment")} title={t("create_offer")}>{team && <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400"><span>{team.name}</span><span className="text-zinc-400">·</span><GameBadge game={g} size="lg" /></div>}</PageTitle>
       <form onSubmit={submit} className="card-elysium p-6 space-y-6" data-testid="offer-create-form">
         <div className="grid md:grid-cols-2 gap-6">
           <Field label={t("game")} required><div className="input-elysium flex items-center" data-testid="offer-game-display">{g ? <GameBadge game={g} /> : "…"}</div></Field>
@@ -45,7 +47,7 @@ export function OfferCreate() {
           <Field label={t("region")} required><select data-testid="offer-region-select" className="input-elysium" value={f.region} onChange={set("region")}>{REGIONS.map((r) => <option key={r}>{r}</option>)}</select></Field>
           <Field label={t("availability")}><input data-testid="offer-availability-input" className="input-elysium" value={f.availability} onChange={set("availability")} placeholder={t("availability_placeholder")} /></Field>
         </div>
-        <Field label={t("description")}><textarea data-testid="offer-description-input" className="input-elysium" value={f.description} onChange={set("description")} maxLength={2000} /></Field>
+        <Field label={t("description")} hint={`${f.description.length}/2000 ${t("chars")}`}><textarea data-testid="offer-description-input" className="input-elysium" value={f.description} onChange={set("description")} maxLength={2000} /></Field>
         <button data-testid="offer-submit-button" disabled={busy || !team} className="btn-gold">{t("publish")}</button>
       </form>
     </div>
@@ -79,6 +81,7 @@ export default function OfferDetail() {
 
   return (
     <div className="max-w-3xl space-y-6" data-testid="offer-detail-page">
+      <Seo title={`${offer.role} — ${offer.teamName}`} description={offer.description || `${offer.teamName} ${t("recruitment").toLowerCase()} ${offer.role} (${g.name}, ${offer.region})`} image={offer.teamLogo} jsonLd={offerLd(offer, g)} noindex={offer.status !== "open"} />
       <div className={`card-elysium p-6 sm:p-8 ${offer.isOfficial ? "card-official" : ""}`} style={{ borderLeftColor: g.color, borderLeftWidth: 3 }}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-4">
@@ -98,12 +101,12 @@ export default function OfferDetail() {
           ))}
         </div>
         {offer.description && <p className="mt-6 text-sm text-zinc-300 whitespace-pre-line">{offer.description}</p>}
-        <p className="mt-4 text-xs text-zinc-500">{t("published_on")} {formatDate(offer.createdAt, true)}</p>
+        <p className="mt-4 text-xs text-zinc-400">{t("published_on")} {formatDate(offer.createdAt, true)}</p>
       </div>
 
       {isOwner ? (
         <div className="flex gap-2">
-          <button data-testid="offer-toggle-status-button" onClick={close} className="btn-outline text-xs">{offer.status === "open" ? t("close_offer") : t("reopen_offer")}</button>
+          <ConfirmButton testId="offer-toggle-status-button" onConfirm={close} title={offer.status === "open" ? t("close_offer") : t("reopen_offer")} className="btn-outline text-xs">{offer.status === "open" ? t("close_offer") : t("reopen_offer")}</ConfirmButton>
           <Link to={`/dashboard?team=${offer.teamId}&tab=applications`} data-testid="offer-view-applications-link" className="btn-ghost text-xs">{t("view_applications")}</Link>
         </div>
       ) : applied ? (

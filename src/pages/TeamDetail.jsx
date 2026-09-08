@@ -12,6 +12,7 @@ import { Avatar, OfferCard } from "@/components/common/Cards";
 import { GameBadge, OfficialBadge } from "@/components/common/Badges";
 import { EmptyState, Skeletons } from "@/components/common/States";
 import NotFound from "./NotFound";
+import { Seo, teamLd } from "@/components/common/Seo";
 
 export default function TeamDetail() {
   const { id } = useParams();
@@ -43,8 +44,8 @@ export default function TeamDetail() {
 
   return (
     <div className="space-y-8" data-testid="team-detail-page">
+      <Seo title={`${team.name} — ${g.name} ${team.region}`} description={team.description || `${team.name}, ${t("team")} ${g.name} (${team.region})`} image={team.logo} jsonLd={teamLd(team, g)} />
       <div className={`card-elysium relative overflow-hidden p-6 sm:p-8 ${team.isOfficial ? "card-official" : ""}`} style={{ borderTopColor: g.color, borderTopWidth: 3 }}>
-        <img src="/brand/pattern.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.04] pointer-events-none" />
         <div className="relative flex flex-wrap items-start gap-6">
           <Avatar src={team.logo} name={team.name} size="h-24 w-24" className="text-2xl" />
           <div className="flex-1 min-w-[240px]">
@@ -55,7 +56,9 @@ export default function TeamDetail() {
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-400">
               <GameBadge game={g} size="lg" />
               <span className="badge border-white/10 text-zinc-300"><MapPin className="h-3 w-3" />{team.region}</span>
-              <span className="badge border-white/10 text-zinc-300"><Users className="h-3 w-3" />{team.memberIds?.length || 0} {t("members")}</span>
+              <span className="badge border-white/10 text-zinc-300"><Users className="h-3 w-3" aria-hidden="true" />{team.memberIds?.length || 0} {t("members")}</span>
+              {team.level && <span className="badge bg-[#D8CA82] text-[#111111] border-[#D8CA82]" data-testid="team-level">{t(`level_${team.level}`)}</span>}
+              {team.rank && <span className="badge border-white/10 text-zinc-200" data-testid="team-rank">{team.rank}</span>}
               {(team.languages || []).map((l) => <span key={l} className="badge border-white/10 text-zinc-400">{t(`lang_${l}`)}</span>)}
             </div>
             {team.description && <p className="mt-4 text-sm text-zinc-300 max-w-2xl whitespace-pre-line">{team.description}</p>}
@@ -97,7 +100,7 @@ export default function TeamDetail() {
                   <div className="text-xs text-zinc-400">{p.place}{p.date && ` · ${formatDate(p.date)}`}</div></li>
               ))}
             </ol>
-          ) : <p className="text-xs text-zinc-500" data-testid="empty-palmares">{t("no_palmares")}</p>}
+          ) : <p className="text-xs text-zinc-400" data-testid="empty-palmares">{t("no_palmares")}</p>}
         </aside>
       </div>
     </div>

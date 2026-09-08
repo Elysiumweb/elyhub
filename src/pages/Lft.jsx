@@ -12,6 +12,7 @@ import { GameSelector } from "@/components/common/GameSelector";
 import { RankSelect } from "@/components/common/RankSelect";
 import { Avatar } from "@/components/common/Cards";
 import { GameBadge, OfficialBadge, StatusBadge } from "@/components/common/Badges";
+import { ConfirmButton } from "@/components/common/ConfirmButton";
 
 export const LftCard = ({ lft }) => {
   const { getGame } = useGames();
@@ -26,7 +27,7 @@ export const LftCard = ({ lft }) => {
     nav(`/messages/${cid}`);
   };
   return (
-    <div data-testid={`lft-card-${lft.id}`} className={`card-elysium hoverable relative p-4 ${lft.isOfficial ? "card-official" : ""}`}>
+    <div data-testid={`lft-card-${lft.id}`} className={`card-elysium relative p-4 ${lft.isOfficial ? "card-official" : ""}`}>
       <span className="absolute left-0 top-0 h-full w-[3px]" style={{ backgroundColor: lft.isOfficial ? "#D8CA82" : g.color }} />
       <div className="flex items-start gap-3">
         <Link to={`/players/${lft.playerId}`}><Avatar src={lft.playerAvatar} name={lft.playerPseudo} round size="h-12 w-12" /></Link>
@@ -46,7 +47,7 @@ export const LftCard = ({ lft }) => {
           </div>
           {lft.message && <p className="mt-2 text-xs text-zinc-400 line-clamp-2">{lft.message}</p>}
           <div className="mt-3 flex gap-2">
-            {mine ? <button data-testid={`lft-toggle-${lft.id}`} onClick={() => updateLft(lft.id, { status: lft.status === "open" ? "closed" : "open" })} className="btn-ghost text-xs h-8">{lft.status === "open" ? t("close_lft") : t("reopen_lft")}</button>
+            {mine ? <ConfirmButton testId={`lft-toggle-${lft.id}`} onConfirm={() => updateLft(lft.id, { status: lft.status === "open" ? "closed" : "open" })} title={lft.status === "open" ? t("close_lft") : t("reopen_lft")} className="btn-ghost text-xs h-8">{lft.status === "open" ? t("close_lft") : t("reopen_lft")}</ConfirmButton>
               : user && lft.status === "open" && <button data-testid={`lft-contact-${lft.id}`} onClick={contact} className="btn-outline text-xs h-8"><MessageSquare className="h-3.5 w-3.5" />{t("contact")}</button>}
           </div>
         </div>
