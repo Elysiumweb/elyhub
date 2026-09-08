@@ -1,4 +1,4 @@
-export const ADMIN_UID = process.env.REACT_APP_ADMIN_UID;
+export const ADMIN_UID = process.env.ADMIN_UID;
 
 export const REGIONS = ["EU", "NA", "ASIA", "LATAM", "OCE", "MENA"];
 export const LANGUAGES = ["fr", "en", "de", "es", "pt", "it"];

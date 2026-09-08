@@ -6,6 +6,9 @@ import { FiltersProvider } from "@/context/FiltersContext";
 import { I18nProvider } from "@/i18n";
 import Layout from "@/components/layout/Layout";
 import { Skeletons } from "@/components/common/States";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
+import SetupRequired from "@/components/common/SetupRequired";
+import { firebaseReady } from "@/lib/firebase";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Onboarding from "@/pages/Onboarding";
@@ -41,7 +44,11 @@ const PublicOnly = () => {
 };
 
 function App() {
+  // Sans configuration Firebase, on affiche une page explicative plutôt qu'un écran vide.
+  if (!firebaseReady) return <SetupRequired />;
+
   return (
+    <ErrorBoundary>
     <I18nProvider>
       <AuthProvider>
         <FiltersProvider>
@@ -83,6 +90,7 @@ function App() {
         </FiltersProvider>
       </AuthProvider>
     </I18nProvider>
+    </ErrorBoundary>
   );
 }
 
