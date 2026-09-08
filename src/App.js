@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { FiltersProvider } from "@/context/FiltersContext";
 import { I18nProvider } from "@/i18n";
 import Layout from "@/components/layout/Layout";
+import ConfigWarning from "@/components/common/ConfigWarning";
+import { isFirebaseConfigured } from "@/lib/firebase";
 import { Skeletons } from "@/components/common/States";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
@@ -48,6 +50,7 @@ function App() {
       <AuthProvider>
         <FiltersProvider>
           <BrowserRouter>
+            {!isFirebaseConfigured && <ConfigWarning />}
             <Routes>
               <Route path="/login" element={<PublicOnly />} />
               <Route path="/register" element={<PublicOnly />} />
