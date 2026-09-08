@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
+import { Seo } from "@/components/common/Seo";
 
 export default function NotFound() {
   const { t } = useI18n();
   return (
     <div data-testid="not-found-page" className="relative overflow-hidden card-elysium p-12 sm:p-20 text-left">
+      <Seo title="404" noindex />
       <img src="/brand/accent-blade.png" alt="" className="absolute -right-24 -bottom-24 w-[480px] opacity-20 pointer-events-none" />
-      <div className="eyebrow mb-3">Error</div>
+      <div className="eyebrow mb-3">{t("error_label")}</div>
       <h1 className="font-display text-6xl sm:text-8xl text-[#D8CA82] leading-none">404</h1>
       <p className="mt-4 text-lg text-white font-display uppercase">{t("not_found_title")}</p>
       <p className="mt-2 text-sm text-zinc-400 max-w-md">{t("not_found_desc")}</p>

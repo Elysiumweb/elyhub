@@ -23,7 +23,7 @@ export default function Admin() {
           <div className="grid gap-2" data-testid="pending-games-list">
             {pending.map((g) => (
               <div key={g.id} data-testid={`pending-game-${g.id}`} className="card-elysium p-4 flex flex-wrap items-center gap-4">
-                <div className="flex-1"><div className="font-display text-sm uppercase text-white">{g.name}</div><div className="text-xs text-zinc-500">{t("proposed_by")} {g.createdBy?.slice(0, 8)}… · {formatDate(g.createdAt, true)}</div></div>
+                <div className="flex-1"><div className="font-display text-sm uppercase text-white">{g.name}</div><div className="text-xs text-zinc-400">{t("proposed_by")} {g.createdBy?.slice(0, 8)}… · {formatDate(g.createdAt, true)}</div></div>
                 <PendingBadge mine />
                 <button data-testid={`validate-game-${g.id}`} onClick={() => act(g.id, "validated")} className="btn-gold h-8 text-xs"><Check className="h-4 w-4" />{t("validate")}</button>
                 <button data-testid={`reject-game-${g.id}`} onClick={() => act(g.id, "rejected")} className="btn-danger h-8 text-xs"><X className="h-4 w-4" />{t("reject")}</button>
@@ -40,7 +40,7 @@ export default function Admin() {
       </section>
       <section>
         <h2 className="section-title"><Flag className="h-3.5 w-3.5" />{t("reports")} ({reports.data.length})</h2>
-        {reports.data.length === 0 ? <p className="text-xs text-zinc-500">{t("no_reports")}</p> : <div className="grid gap-2">{reports.data.map((r) => <div key={r.id} className="card-elysium p-3 text-xs text-zinc-300">{t("conversation")} <code className="text-[#D8CA82]">{r.conversationId}</code> · {r.reason} · {formatDate(r.createdAt, true)}</div>)}</div>}
+        {reports.data.length === 0 ? <p className="text-xs text-zinc-400">{t("no_reports")}</p> : <div className="grid gap-2">{reports.data.map((r) => <div key={r.id} className="card-elysium p-3 text-xs text-zinc-300">{t("conversation")} <code className="text-[#D8CA82]">{r.conversationId}</code> · {r.reason} · {formatDate(r.createdAt, true)}</div>)}</div>}
       </section>
     </div>
   );

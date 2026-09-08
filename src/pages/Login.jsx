@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail } from "firebase/auth";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ const authError = (e, t) => {
 export default function Login() {
   const { pathname } = useLocation();
   const [mode, setMode] = useState(pathname === "/register" ? "register" : "login");
+  useEffect(() => setMode(pathname === "/register" ? "register" : "login"), [pathname]);
   const [form, setForm] = useState({ email: "", password: "" });
   const [busy, setBusy] = useState(false);
   const nav = useNavigate();
@@ -43,7 +44,6 @@ export default function Login() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-[#111111]">
       <div className="hidden lg:flex relative flex-col justify-between p-12 border-r border-[#D8CA82]/20 overflow-hidden">
-        <img src="/brand/pattern.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.07]" />
         <img src="/brand/accent-blade.png" alt="" className="absolute -right-20 -bottom-24 w-[560px] opacity-40 pointer-events-none" />
         <Link to="/" data-testid="login-logo-link"><img src="/brand/logo-horizontal-gold.png" alt="Elysium" className="h-10 relative" /></Link>
         <div className="relative">
@@ -51,7 +51,7 @@ export default function Login() {
           <h1 className="font-display text-4xl xl:text-5xl uppercase leading-[1.05] text-white">{t("login_hero_1")}<br /><span className="text-[#D8CA82]">{t("login_hero_2")}</span></h1>
           <p className="mt-6 text-zinc-400 max-w-md">{t("login_hero_desc")}</p>
         </div>
-        <p className="text-xs text-zinc-600 relative">© Elysium — {t("footer_tagline")}</p>
+        <p className="text-xs text-zinc-400 relative">© Elysium — {t("footer_tagline")}</p>
       </div>
       <div className="flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
@@ -66,8 +66,8 @@ export default function Login() {
             <Field label={t("password")} required><input data-testid="auth-password-input" type="password" required minLength={6} className="input-elysium" value={form.password} onChange={set("password")} placeholder="••••••••" /></Field>
             <button data-testid="auth-submit-button" disabled={busy} className="btn-gold w-full">{mode === "login" ? t("login") : t("register")}</button>
           </form>
-          {mode === "login" && <button data-testid="auth-forgot-button" onClick={reset} className="text-xs text-zinc-500 hover:text-[#D8CA82] mt-3">{t("forgot_password")}</button>}
-          <div className="flex items-center gap-3 my-6"><span className="h-px flex-1 bg-white/10" /><span className="text-xs text-zinc-500 uppercase">{t("or")}</span><span className="h-px flex-1 bg-white/10" /></div>
+          {mode === "login" && <button data-testid="auth-forgot-button" onClick={reset} className="text-xs text-zinc-400 hover:text-[#D8CA82] mt-3">{t("forgot_password")}</button>}
+          <div className="flex items-center gap-3 my-6"><span className="h-px flex-1 bg-white/10" /><span className="text-xs text-zinc-400 uppercase">{t("or")}</span><span className="h-px flex-1 bg-white/10" /></div>
           <button data-testid="auth-google-button" onClick={google} disabled={busy} className="btn-outline w-full">
             <svg className="h-4 w-4" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1H12v2.9h5.35c-.25 1.5-1.7 4.4-5.35 4.4a6.4 6.4 0 1 1 0-12.8c1.85 0 3.1.8 3.8 1.45l2.6-2.5A10 10 0 0 0 12 2a10 10 0 1 0 0 20c5.75 0 9.55-4.05 9.55-9.75 0-.65-.05-1.15-.2-1.15Z" /></svg>
             {t("continue_google")}

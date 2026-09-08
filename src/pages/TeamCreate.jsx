@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
 import { createTeam } from "@/lib/db";
-import { REGIONS, LANGUAGES } from "@/lib/constants";
+import { REGIONS, LANGUAGES, LEVELS } from "@/lib/constants";
+import { RankSelect } from "@/components/common/RankSelect";
 import { Field, PageTitle } from "@/components/common/States";
 import { GameSelector } from "@/components/common/GameSelector";
 import { ImageUpload } from "@/components/common/ImageUpload";
@@ -13,7 +14,7 @@ export default function TeamCreate() {
   const { user, profile } = useAuth();
   const { t } = useI18n();
   const nav = useNavigate();
-  const [f, setF] = useState({ name: "", gameId: "", region: profile?.region || "EU", logo: null, description: "", languages: profile?.languages || ["fr"] });
+  const [f, setF] = useState({ name: "", gameId: "", region: profile?.region || "EU", logo: null, description: "", languages: profile?.languages || ["fr"], level: "amateur", rank: "" });
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
@@ -36,6 +37,10 @@ export default function TeamCreate() {
           <Field label={t("region")} required><select data-testid="team-region-select" className="input-elysium" value={f.region} onChange={set("region")}>{REGIONS.map((r) => <option key={r}>{r}</option>)}</select></Field>
         </div>
         <Field label={t("game")} required><GameSelector value={f.gameId} onChange={(v) => setF({ ...f, gameId: v })} testId="team-game-selector" /></Field>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Field label={t("level")} hint={t("level_hint")}><select data-testid="team-level-select" className="input-elysium" value={f.level} onChange={set("level")}>{LEVELS.map((l) => <option key={l} value={l}>{t(`level_${l}`)}</option>)}</select></Field>
+          <Field label={t("team_rank")}><RankSelect gameId={f.gameId} value={f.rank} onChange={(v) => setF({ ...f, rank: v })} testId="team-rank-select" /></Field>
+        </div>
         <Field label={t("logo")}><ImageUpload value={f.logo} onChange={(v) => setF({ ...f, logo: v })} testId="team-logo-upload" /></Field>
         <Field label={t("languages")}>
           <div className="flex flex-wrap gap-2">
