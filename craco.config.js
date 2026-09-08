@@ -11,6 +11,30 @@ const config = {
   enableHealthCheck: process.env.ENABLE_HEALTH_CHECK === "true",
 };
 
+// Create React App n'injecte dans le bundle client que les variables préfixées
+// `REACT_APP_`. Les noms documentés dans `.env.example` (et donc ceux saisis sur
+// Vercel) sont sans préfixe : on les expose explicitement ici via DefinePlugin.
+// Ajoutez-y toute nouvelle variable à lire depuis `process.env` côté client.
+const CLIENT_ENV_VARS = [
+  "FIREBASE_API_KEY",
+  "FIREBASE_AUTH_DOMAIN",
+  "FIREBASE_PROJECT_ID",
+  "FIREBASE_STORAGE_BUCKET",
+  "FIREBASE_MESSAGING_SENDER_ID",
+  "FIREBASE_APP_ID",
+  "FIREBASE_MEASUREMENT_ID",
+  "ADMIN_UID",
+];
+
+function clientEnvDefinitions() {
+  const definitions = {};
+  for (const name of CLIENT_ENV_VARS) {
+    const value = process.env[name] ?? process.env[`REACT_APP_${name}`];
+    if (value !== undefined && value !== "") definitions[`process.env.${name}`] = JSON.stringify(String(value));
+  }
+  return definitions;
+}
+
 function makeDevServerV5Compatible(devServerConfig) {
   const {
     https,
@@ -102,6 +126,14 @@ let webpackConfig = {
       if (config.enableHealthCheck && healthPluginInstance) {
         webpackConfig.plugins.push(healthPluginInstance);
       }
+
+      // Expose les variables sans préfixe REACT_APP_ au code client (cf. .env.example)
+      const clientEnv = clientEnvDefinitions();
+      if (Object.keys(clientEnv).length > 0) {
+        const webpack = require("webpack");
+        webpackConfig.plugins.push(new webpack.DefinePlugin(clientEnv));
+      }
+
       return webpackConfig;
     },
   },

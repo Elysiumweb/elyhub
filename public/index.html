@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#000000" />
-        <meta name="description" content="A product of emergent.sh" />
+        <meta name="theme-color" content="#111111" />
+        <meta name="description" content="ElyHub · la plateforme esports d'Elysium : équipes, scrims, tournois et recrutement." />
+        <link rel="icon" href="%PUBLIC_URL%/brand/logo-icon-gold.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet" />
@@ -21,13 +22,33 @@
         work correctly both with client-side routing and a non-root public URL.
         Learn how to configure a non-root public URL by running `npm run build`.
         -->
-        <title>Emergent | Fullstack App</title>
+        <title>ElyHub · Elysium</title>
         <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
-        <div id="root"></div>
+        <div id="root">
+            <!-- Contenu de secours : visible tant que React n'a pas monté l'application
+                 (bundle absent ou en erreur). React remplace ces enfants au 1er rendu. -->
+            <div id="boot-fallback" style="min-height: 100vh; background: #111111; color: #ffffff; font-family: system-ui, -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px;">
+                <div style="font-size: 12px; letter-spacing: 0.25em; text-transform: uppercase; color: #d8ca82;">Elysium &middot; ElyHub</div>
+                <div style="font-size: 14px; color: #a1a1aa;">Chargement de l'application&hellip; / Loading&hellip;</div>
+                <div id="boot-fallback-error" style="display: none; max-width: 560px; border: 1px solid rgba(216, 202, 130, 0.3); background: #141414; padding: 16px; font-size: 13px; line-height: 1.5; color: #fca5a5;"></div>
+            </div>
+        </div>
+        <script>
+            // Si React n'a rien monté après 10 s (bundle 404, erreur avant le rendu),
+            // on explique la situation au lieu de laisser un écran noir muet.
+            setTimeout(function () {
+                if (!document.getElementById("boot-fallback")) return;
+                var err = document.getElementById("boot-fallback-error");
+                if (!err) return;
+                err.style.display = "block";
+                err.textContent =
+                    "L'application n'a pas démarré. Rechargez la page, puis ouvrez la console du navigateur (F12) pour voir le détail de l'erreur.";
+            }, 10000);
+        </script>
         <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.

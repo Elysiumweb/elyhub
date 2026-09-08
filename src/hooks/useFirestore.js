@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { onSnapshot, doc, collection, query } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { withId } from "@/lib/db";
 
 // Live collection. `constraints` are firestore query constraints; deps triggers resubscription.
-export function useCollection(path, constraints = [], deps = [], enabled = true) {
+// Sans configuration Firebase on ne lance aucun abonnement (données vides plutôt qu'erreurs réseau).
+export function useCollection(path, constraints = [], deps = [], enabled = isFirebaseConfigured) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,15 +21,15 @@ export function useCollection(path, constraints = [], deps = [], enabled = true)
   return { data, loading, error };
 }
 
-export function useDocument(path, id) {
+export function useDocument(path, id, enabled = isFirebaseConfigured) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    if (!id) { setLoading(false); return; }
+    if (!id || !enabled) { setLoading(false); return; }
     setLoading(true);
     const unsub = onSnapshot(doc(db, path, id), (snap) => { setData(snap.exists() ? withId(snap) : null); setLoading(false); },
       (e) => { console.error(path, e); setLoading(false); });
     return unsub;
-  }, [path, id]);
+  }, [path, id, enabled]);
   return { data, loading };
 }
