@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /messages
-Disallow: /dashboard
-Disallow: /account
-Disallow: /admin
-Disallow: /applications
-Disallow: /onboarding
