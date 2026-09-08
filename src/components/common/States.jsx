@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Inbox } from "lucide-react";
+import { Inbox, AlertTriangle } from "lucide-react";
 import { useI18n } from "@/i18n";
 
 export const EmptyState = ({ title, description, action, to, icon: Icon = Inbox, testId = "empty-state" }) => (
@@ -22,7 +22,7 @@ export const PageTitle = ({ eyebrow, title, right, children }) => (
     <div>
       {eyebrow && <div className="eyebrow mb-2">{eyebrow}</div>}
       <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl uppercase tracking-wide text-white flex items-center gap-3">
-        <span className="text-[#D8CA82]">&lt;</span>{title}<span className="text-[#D8CA82]">&gt;</span>
+        <span className="text-[#D8CA82]" aria-hidden="true">&lt;</span>{title}<span className="text-[#D8CA82]" aria-hidden="true">&gt;</span>
       </h1>
       {children}
     </div>
@@ -34,11 +34,31 @@ export const Field = ({ label, children, hint, required }) => (
   <label className="block">
     <span className="label">{label}{required && <span className="text-[#D8CA82] ml-1">*</span>}</span>
     {children}
-    {hint && <span className="text-xs text-zinc-500 mt-1 block">{hint}</span>}
+    {hint && <span className="text-xs text-zinc-400 mt-1 block">{hint}</span>}
   </label>
 );
 
 export const AuthRequired = () => {
   const { t } = useI18n();
   return <EmptyState title={t("login_required")} description={t("login_required_desc")} action={t("login")} to="/login" testId="auth-required" />;
+};
+
+// Firestore read error (permissions / offline) — never confuse with an empty list
+export const ErrorState = ({ error }) => {
+  const { t } = useI18n();
+  const denied = error?.code === "permission-denied";
+  return (
+    <div data-testid="error-state" role="alert" className="border border-red-500/40 bg-red-500/10 p-5 flex items-start gap-3">
+      <AlertTriangle className="h-5 w-5 text-red-400 shrink-0" aria-hidden="true" />
+      <div><div className="text-sm font-semibold text-white">{denied ? t("err_permission") : t("err_load")}</div><p className="text-xs text-zinc-300 mt-1">{denied ? t("err_permission_desc") : error?.message}</p></div>
+    </div>
+  );
+};
+
+// List wrapper: loading → error → empty → items
+export const ListState = ({ loading, error, empty, count, children, skeletons = 4 }) => {
+  if (error) return <ErrorState error={error} />;
+  if (loading) return <Skeletons n={skeletons} />;
+  if (count === 0) return empty;
+  return children;
 };

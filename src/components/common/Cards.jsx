@@ -36,7 +36,7 @@ export const TeamCard = ({ team }) => {
             <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{team.region}</span>
             <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{team.memberIds?.length || 0} {t("members").toLowerCase()}</span>
           </div>
-          {team.description && <p className="mt-2 text-xs text-zinc-500 line-clamp-2">{team.description}</p>}
+          {team.description && <p className="mt-2 text-xs text-zinc-400 line-clamp-2">{team.description}</p>}
         </div>
       </div>
     </Shell>
@@ -123,8 +123,8 @@ export const TournamentCard = ({ tournament: tr }) => {
           </div>
         </div>
         <div className="text-right shrink-0">
-          <div className="font-display text-lg text-[#D8CA82]" data-testid={`tournament-slots-${tr.id}`}>{left}<span className="text-zinc-500 text-xs">/{tr.slots}</span></div>
-          <div className="text-[10px] uppercase tracking-wider text-zinc-500">{t("slots_left")}</div>
+          <div className="font-display text-lg text-[#D8CA82]" data-testid={`tournament-slots-${tr.id}`}>{left}<span className="text-zinc-400 text-xs">/{tr.slots}</span></div>
+          <div className="text-[10px] uppercase tracking-wider text-zinc-400">{t("slots_left")}</div>
         </div>
       </div>
     </Shell>

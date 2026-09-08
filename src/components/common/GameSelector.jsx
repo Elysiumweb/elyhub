@@ -36,8 +36,8 @@ export const GameSelector = ({ value, onChange, multiple = false, allowCreate = 
   return (
     <div data-testid={testId} className="border border-white/10 bg-[#141414]">
       <div className="flex items-center gap-2 px-3 border-b border-white/10">
-        <Search className="h-4 w-4 text-zinc-500" />
-        <input data-testid={`${testId}-search`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("search_game")} className="bg-transparent h-10 flex-1 text-sm outline-none placeholder:text-zinc-600" />
+        <Search className="h-4 w-4 text-zinc-400" />
+        <input data-testid={`${testId}-search`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("search_game")} className="bg-transparent h-10 flex-1 text-sm outline-none placeholder:text-zinc-400" />
       </div>
       <div className="max-h-56 overflow-y-auto p-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
         {list.map((g) => {
@@ -61,7 +61,7 @@ export const GameSelector = ({ value, onChange, multiple = false, allowCreate = 
             <Plus className="h-4 w-4" /> {t("create_game")} « {q.trim()} »
           </button>
         )}
-        {list.length === 0 && !q && <p className="text-xs text-zinc-500 p-2">{t("no_results")}</p>}
+        {list.length === 0 && !q && <p className="text-xs text-zinc-400 p-2">{t("no_results")}</p>}
       </div>
     </div>
   );

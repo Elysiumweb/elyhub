@@ -40,7 +40,7 @@ export const OfficialBadge = ({ className }) => {
 export const PendingBadge = ({ mine }) => {
   const { t } = useI18n();
   return (
-    <span data-testid="pending-validation-badge" className={cn("badge gap-1", mine ? STATUS_STYLES.pending : "bg-zinc-700/40 text-zinc-500 border-zinc-600/40")}>
+    <span data-testid="pending-validation-badge" className={cn("badge gap-1", mine ? STATUS_STYLES.pending : "bg-zinc-700/40 text-zinc-400 border-zinc-600/40")}>
       <Clock className="h-3 w-3" /> {t("pending_validation")}
     </span>
   );

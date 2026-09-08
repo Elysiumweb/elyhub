@@ -43,7 +43,7 @@ export const Standings = ({ teams, matches }) => {
   return (
     <div className="card-elysium overflow-hidden" data-testid="standings-table">
       <table className="w-full text-xs">
-        <thead className="bg-[#111111] text-zinc-500 uppercase tracking-wider text-[10px]"><tr><th className="p-2 text-left">#</th><th className="p-2 text-left">{t("team")}</th><th className="p-2">J</th><th className="p-2">V</th><th className="p-2">N</th><th className="p-2">D</th><th className="p-2">+/-</th><th className="p-2 text-[#D8CA82]">Pts</th></tr></thead>
+        <caption className="sr-only">{t("standings")}</caption><thead className="bg-[#111111] text-zinc-400 uppercase tracking-wider text-[11px]"><tr><th scope="col" className="p-2 text-left">#</th><th scope="col" className="p-2 text-left">{t("team")}</th><th scope="col" className="p-2" title={t("th_played_full")}>{t("th_played")}</th><th scope="col" className="p-2" title={t("th_wins_full")}>{t("th_wins")}</th><th scope="col" className="p-2" title={t("th_draws_full")}>{t("th_draws")}</th><th scope="col" className="p-2" title={t("th_losses_full")}>{t("th_losses")}</th><th scope="col" className="p-2">+/-</th><th scope="col" className="p-2 text-[#D8CA82]">Pts</th></tr></thead>
         <tbody>{table.map((row, i) => (
           <tr key={row.id} data-testid={`standing-row-${row.id}`} className={`border-t border-white/5 ${i === 0 ? "bg-[#D8CA82]/5" : ""}`}>
             <td className="p-2 font-display text-[#D8CA82]">{i + 1}</td>
