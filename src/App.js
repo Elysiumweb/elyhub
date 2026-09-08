@@ -5,6 +5,9 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { FiltersProvider } from "@/context/FiltersContext";
 import { I18nProvider } from "@/i18n";
 import Layout from "@/components/layout/Layout";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
+import SetupRequired from "@/components/common/SetupRequired";
+import { isFirebaseReady } from "@/lib/firebase";
 import { Skeletons } from "@/components/common/States";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
@@ -39,53 +42,58 @@ const Protected = ({ admin = false }) => {
 const PublicOnly = () => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  return user ? <Navigate to="/" replace /> : <Login />;
+  return user ? <Navigate to="/login" replace /> : <Login />;
 };
 
 function App() {
+  // Firebase absent ou mal configuré (variables d'env manquantes au build) :
+  // afficher un écran d'explication au lieu d'une page noire.
+  if (!isFirebaseReady) return <SetupRequired />;
   return (
-    <I18nProvider>
-      <AuthProvider>
-        <FiltersProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<PublicOnly />} />
-              <Route path="/register" element={<PublicOnly />} />
-              <Route element={<Layout />}>
-                <Route index element={<Home />} />
-                <Route path="/teams" element={<Teams />} />
-                <Route path="/teams/:id" element={<TeamDetail />} />
-                <Route path="/offers/:id" element={<OfferDetail />} />
-                <Route path="/players" element={<Players />} />
-                <Route path="/players/:id" element={<PlayerProfile />} />
-                <Route path="/scrims" element={<Scrims />} />
-                <Route path="/scrims/:id" element={<ScrimDetail />} />
-                <Route path="/tournaments" element={<Tournaments />} />
-                <Route path="/tournaments/:id" element={<TournamentDetail />} />
-                <Route element={<Protected />}>
-                  <Route path="/onboarding" element={<Onboarding />} />
-                  <Route path="/account" element={<Account />} />
-                  <Route path="/dashboard" element={<TeamDashboard />} />
-                  <Route path="/teams/new" element={<TeamCreate />} />
-                  <Route path="/teams/:teamId/offers/new" element={<OfferCreate />} />
-                  <Route path="/applications" element={<MyApplications />} />
-                  <Route path="/messages" element={<Messages />} />
-                  <Route path="/messages/:id" element={<Messages />} />
-                  <Route path="/scrims/new" element={<ScrimCreate />} />
-                  <Route path="/tournaments/new" element={<TournamentCreate />} />
-                  <Route path="/lft/new" element={<LftCreate />} />
+    <ErrorBoundary>
+      <I18nProvider>
+        <AuthProvider>
+          <FiltersProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<PublicOnly />} />
+                <Route path="/register" element={<PublicOnly />} />
+                <Route element={<Layout />}>
+                  <Route index element={<Home />} />
+                  <Route path="/teams" element={<Teams />} />
+                  <Route path="/teams/:id" element={<TeamDetail />} />
+                  <Route path="/offers/:id" element={<OfferDetail />} />
+                  <Route path="/players" element={<Players />} />
+                  <Route path="/players/:id" element={<PlayerProfile />} />
+                  <Route path="/scrims" element={<Scrims />} />
+                  <Route path="/scrims/:id" element={<ScrimDetail />} />
+                  <Route path="/tournaments" element={<Tournaments />} />
+                  <Route path="/tournaments/:id" element={<TournamentDetail />} />
+                  <Route element={<Protected />}>
+                    <Route path="/onboarding" element={<Onboarding />} />
+                    <Route path="/account" element={<Account />} />
+                    <Route path="/dashboard" element={<TeamDashboard />} />
+                    <Route path="/teams/new" element={<TeamCreate />} />
+                    <Route path="/teams/:teamId/offers/new" element={<OfferCreate />} />
+                    <Route path="/applications" element={<MyApplications />} />
+                    <Route path="/messages" element={<Messages />} />
+                    <Route path="/messages/:id" element={<Messages />} />
+                    <Route path="/scrims/new" element={<ScrimCreate />} />
+                    <Route path="/tournaments/new" element={<TournamentCreate />} />
+                    <Route path="/lft/new" element={<LftCreate />} />
+                  </Route>
+                  <Route element={<Protected admin />}>
+                    <Route path="/admin" element={<Admin />} />
+                  </Route>
+                  <Route path="*" element={<NotFound />} />
                 </Route>
-                <Route element={<Protected admin />}>
-                  <Route path="/admin" element={<Admin />} />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-          <Toaster theme="dark" position="top-right" toastOptions={{ className: "!bg-[#181818] !border-[#D8CA82]/30 !text-white !rounded-none" }} />
-        </FiltersProvider>
-      </AuthProvider>
-    </I18nProvider>
+              </Routes>
+            </BrowserRouter>
+            <Toaster theme="dark" position="top-right" toastOptions={{ className: "!bg-[#181818] !border-[#D8CA82]/30 !text-white !rounded-none" }} />
+          </FiltersProvider>
+        </AuthProvider>
+      </I18nProvider>
+    </ErrorBoundary>
   );
 }
 

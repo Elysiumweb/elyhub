@@ -1,4 +1,7 @@
-export const ADMIN_UID = process.env.REACT_APP_ADMIN_UID || "Yztk8XFHteYwiwTGCfpnp71lmql1";
+// Nom court ADMIN_UID injecté par CLIENT_ENV_VARS (craco.config.js) ;
+// version REACT_APP_ADMIN_UID standard prioritaire.
+export const ADMIN_UID =
+  process.env.REACT_APP_ADMIN_UID || process.env.ADMIN_UID || "Yztk8XFHteYwiwTGCfpnp71lmql1";
 
 export const REGIONS = ["EU", "NA", "ASIA", "LATAM", "OCE", "MENA"];
 export const LANGUAGES = ["fr", "en", "de", "es", "pt", "it"];
