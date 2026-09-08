@@ -1,6 +1,6 @@
 import {
   doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, getDocs,
-  arrayUnion, arrayRemove, orderBy, limit,
+  arrayUnion, arrayRemove, orderBy, limit, writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { ADMIN_UID } from "./constants";
@@ -107,12 +107,70 @@ export const relaunchScrim = async (scrim) => {
 export const createTournament = (data, uid, organizerTeam) =>
   addDoc(collection(db, "tournaments"), {
     ...data, organizerId: uid, organizerTeamId: organizerTeam?.id || null, organizerName: organizerTeam?.name || null,
-    isOfficial: isOfficialUid(uid), registeredTeamIds: [], registeredTeams: [], createdAt: now(),
+    isOfficial: isOfficialUid(uid), status: "registration", rounds: 0, registeredTeamIds: [], registeredTeams: [], createdAt: now(),
   });
 export const registerTeamToTournament = (tid, team) =>
   updateDoc(doc(db, "tournaments", tid), {
     registeredTeamIds: arrayUnion(team.id),
-    registeredTeams: arrayUnion({ id: team.id, name: team.name, logo: team.logo || null, region: team.region || null }),
+    registeredTeams: arrayUnion({ id: team.id, name: team.name, logo: team.logo || null, region: team.region || null, ownerId: team.ownerId }),
   });
+
+// Tournament matches (bracket)
+export const startTournament = async (tournament, matches, rounds) => {
+  const batch = writeBatch(db);
+  matches.forEach((m) => batch.set(doc(db, "matches", m.id), { ...m, createdAt: now() }));
+  batch.update(doc(db, "tournaments", tournament.id), { status: "ongoing", rounds, startedAt: now() });
+  await batch.commit();
+};
+export const addMatches = async (tournament, matches, round) => {
+  const batch = writeBatch(db);
+  matches.forEach((m) => batch.set(doc(db, "matches", m.id), { ...m, createdAt: now() }));
+  batch.update(doc(db, "tournaments", tournament.id), { rounds: round });
+  await batch.commit();
+};
+export const updateMatch = (id, data) => updateDoc(doc(db, "matches", id), { ...data, updatedAt: now() });
+export const finishTournament = (id, winner) => updateDoc(doc(db, "tournaments", id), { status: "finished", winner: winner || null, finishedAt: now() });
+
+// Set a result and propagate the winner to the next match
+export const resolveMatch = async (match, scoreA, scoreB, resolvedBy) => {
+  const winner = scoreA > scoreB ? match.teamA : scoreB > scoreA ? match.teamB : null;
+  await updateMatch(match.id, { scoreA, scoreB, winnerId: winner?.id || null, status: "done", dispute: null, resolvedBy });
+  if (match.nextMatchId && winner) {
+    const nextRef = doc(db, "matches", match.nextMatchId);
+    const next = (await getDoc(nextRef)).data();
+    const other = match.nextSlot === "teamA" ? next.teamB : next.teamA;
+    await updateDoc(nextRef, { [match.nextSlot]: { id: winner.id, name: winner.name, logo: winner.logo || null, ownerId: winner.ownerId || null }, status: other ? "ready" : "pending", updatedAt: now() });
+  }
+};
+// Captain reports a score with proof; auto-resolve if both reports agree
+export const reportMatch = async (match, teamId, scoreA, scoreB, proof, uid) => {
+  const reports = { ...(match.reports || {}), [teamId]: { scoreA, scoreB, proof: proof || null, by: uid, at: now() } };
+  const otherId = teamId === match.teamA.id ? match.teamB.id : match.teamA.id;
+  const other = reports[otherId];
+  if (other && other.scoreA === scoreA && other.scoreB === scoreB) { await updateMatch(match.id, { reports }); return resolveMatch({ ...match, reports }, scoreA, scoreB, "auto"); }
+  await updateMatch(match.id, { reports, status: other ? "disputed" : "reported", dispute: other ? { reason: "score_mismatch", by: uid, at: now() } : match.dispute || null });
+};
+export const disputeMatch = (match, uid, reason) => updateMatch(match.id, { status: "disputed", dispute: { reason, by: uid, at: now() } });
+
+export const createMatchConversation = async (match, tournament, me) => {
+  const ids = [...new Set([match.teamA.ownerId, match.teamB.ownerId, tournament.organizerId].filter(Boolean))];
+  const participants = {};
+  [match.teamA, match.teamB].forEach((tm) => { if (tm.ownerId) participants[tm.ownerId] = { name: `${tm.name} (capt.)`, avatar: tm.logo || null }; });
+  if (tournament.organizerId && !participants[tournament.organizerId]) participants[tournament.organizerId] = { name: `${tournament.organizerName || "Orga"} (orga)`, avatar: null };
+  const ref = await addDoc(collection(db, "conversations"), {
+    participantIds: ids, participants, type: "match", matchId: match.id, tournamentId: tournament.id, scrimId: null, teamId: null, teamName: tournament.name,
+    title: `${match.teamA.name} vs ${match.teamB.name}`, blockedBy: [], lastMessage: "", lastAt: now(), createdAt: now(),
+  });
+  await updateMatch(match.id, { conversationId: ref.id });
+  return ref.id;
+};
+
+// LFT — players looking for a team
+export const createLft = (data, profile) =>
+  addDoc(collection(db, "lft"), {
+    ...data, playerId: profile.id, playerPseudo: profile.pseudo, playerAvatar: profile.avatar || null, languages: profile.languages || [],
+    status: "open", isOfficial: isOfficialUid(profile.id), createdAt: now(),
+  });
+export const updateLft = (id, data) => updateDoc(doc(db, "lft", id), data);
 
 export const recentQuery = (col, n = 100) => query(collection(db, col), orderBy("createdAt", "desc"), limit(n));

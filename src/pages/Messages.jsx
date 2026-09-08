@@ -18,6 +18,7 @@ const Thread = ({ conv, me }) => {
   useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [msgs.data.length]);
   const otherId = conv.participantIds.find((p) => p !== me.id);
   const other = conv.participants?.[otherId] || { name: "?" };
+  const others = conv.participantIds.filter((p) => p !== me.id).map((p) => conv.participants?.[p]?.name).filter(Boolean);
   const blockedByMe = conv.blockedBy?.includes(me.id);
   const blocked = (conv.blockedBy || []).length > 0;
 
@@ -33,8 +34,8 @@ const Thread = ({ conv, me }) => {
       <div className="flex items-center gap-3 p-3 border-b border-white/10 bg-[#161616]">
         <Avatar src={other.avatar} name={other.name} round size="h-9 w-9" />
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-white truncate">{conv.title || other.name}</div>
-          <div className="text-[10px] uppercase tracking-wider text-zinc-500">{conv.type === "scrim" ? <Link to={`/scrims/${conv.scrimId}`} className="text-[#D8CA82] hover:underline inline-flex items-center gap-1"><Swords className="h-3 w-3" />{t("scrim_discussion")}</Link> : conv.teamName ? <Link to={`/teams/${conv.teamId}`} className="hover:text-[#D8CA82]">{conv.teamName}</Link> : t("direct_message")}</div>
+          <div className="text-sm font-semibold text-white truncate">{conv.title || other.name}{conv.type === "match" && <span className="text-zinc-500 font-normal text-xs ml-2">{others.join(" · ")}</span>}</div>
+          <div className="text-[10px] uppercase tracking-wider text-zinc-500">{conv.type === "scrim" ? <Link to={`/scrims/${conv.scrimId}`} className="text-[#D8CA82] hover:underline inline-flex items-center gap-1"><Swords className="h-3 w-3" />{t("scrim_discussion")}</Link> : conv.type === "match" ? <Link to={`/tournaments/${conv.tournamentId}?tab=matches`} className="text-[#D8CA82] hover:underline inline-flex items-center gap-1"><Swords className="h-3 w-3" />{t("match_discussion")} · {conv.teamName}</Link> : conv.teamName ? <Link to={`/teams/${conv.teamId}`} className="hover:text-[#D8CA82]">{conv.teamName}</Link> : t("direct_message")}</div>
         </div>
         <button data-testid="conversation-block-button" onClick={() => toggleBlock(conv.id, me.id, blockedByMe)} className={`btn-ghost h-8 text-xs ${blockedByMe ? "text-red-400" : ""}`}><Ban className="h-3.5 w-3.5" />{blockedByMe ? t("unblock") : t("block")}</button>
         <button data-testid="conversation-report-button" onClick={report} className="btn-ghost h-8 text-xs"><Flag className="h-3.5 w-3.5" />{t("report")}</button>

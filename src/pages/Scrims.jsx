@@ -8,8 +8,11 @@ import { useFilters } from "@/context/FiltersContext";
 import { useI18n } from "@/i18n";
 import { useCollection } from "@/hooks/useFirestore";
 import { createScrim, rankOfficial } from "@/lib/db";
-import { REGIONS, LEVELS, SCRIM_FORMATS } from "@/lib/constants";
+import { REGIONS, SCRIM_FORMATS } from "@/lib/constants";
 import { ScrimCard } from "@/components/common/Cards";
+import { GameBadge } from "@/components/common/Badges";
+import { RankSelect } from "@/components/common/RankSelect";
+import { useGames } from "@/hooks/useGames";
 import { EmptyState, Field, PageTitle, Skeletons } from "@/components/common/States";
 
 const STATUSES = ["all", "open", "proposed", "accepted", "played", "cancelled"];
@@ -17,12 +20,12 @@ const STATUSES = ["all", "open", "proposed", "accepted", "played", "cancelled"];
 export default function Scrims() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const { apply } = useFilters();
+  const { apply, filters } = useFilters();
   const [status, setStatus] = useState("open");
-  const [level, setLevel] = useState("");
+  const [rank, setRank] = useState("");
   const [date, setDate] = useState("");
   const { data, loading } = useCollection("scrims");
-  const list = rankOfficial(apply(data)).filter((s) => (status === "all" || s.status === status) && (!level || s.level === level) && (!date || (s.date || "").startsWith(date)));
+  const list = rankOfficial(apply(data)).filter((s) => (status === "all" || s.status === status) && (!rank || s.rank === rank) && (!date || (s.date || "").startsWith(date)));
 
   return (
     <div>
@@ -32,7 +35,7 @@ export default function Scrims() {
           {STATUSES.map((s) => <button key={s} data-testid={`scrims-status-${s}`} onClick={() => setStatus(s)} className={`badge px-3 py-1 text-xs cursor-pointer transition-colors ${status === s ? "bg-[#D8CA82] text-black border-[#D8CA82]" : "text-zinc-400 border-white/10 hover:border-white/30"}`}>{s === "all" ? t("all") : t(`status_${s}`)}</button>)}
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <select data-testid="scrims-level-filter" className="select-elysium" value={level} onChange={(e) => setLevel(e.target.value)}><option value="">{t("all_levels")}</option>{LEVELS.map((l) => <option key={l} value={l}>{t(`level_${l}`)}</option>)}</select>
+          {filters.gameId ? <div className="w-44 [&_select]:h-8 [&_select]:text-xs [&_input]:h-8 [&_input]:text-xs"><RankSelect gameId={filters.gameId} value={rank} onChange={setRank} testId="scrims-rank-filter" allowAny /></div> : <span className="text-[10px] uppercase tracking-wider text-zinc-600">{t("pick_game_for_rank")}</span>}
           <input data-testid="scrims-date-filter" type="date" className="select-elysium" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
       </div>
@@ -46,13 +49,16 @@ export default function Scrims() {
 export function ScrimCreate() {
   const { user, profile } = useAuth();
   const { t } = useI18n();
+  const { getGame } = useGames();
   const nav = useNavigate();
   const [params] = useSearchParams();
   const teams = useCollection("teams", [where("ownerId", "==", user?.uid || "-")], [user?.uid], !!user);
-  const [f, setF] = useState({ teamId: params.get("team") || "", date: "", level: "amateur", region: profile?.region || "EU", format: "BO3", notes: "" });
+  const [f, setF] = useState({ teamId: params.get("team") || "", date: "", rank: "", region: profile?.region || "EU", format: "BO3", notes: "" });
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const teamId = f.teamId || teams.data[0]?.id;
+  const team = teams.data.find((x) => x.id === teamId);
+  const g = team ? getGame(team.gameId) : null;
 
   if (!teams.loading && teams.data.length === 0) return <div className="max-w-3xl"><PageTitle eyebrow={t("nav_scrims")} title={t("publish_scrim")} /><EmptyState title={t("no_team_yet")} description={t("scrim_need_team_desc")} action={t("create_team")} to="/teams/new" testId="empty-scrim-create" /></div>;
 
@@ -70,9 +76,10 @@ export function ScrimCreate() {
       <PageTitle eyebrow={t("nav_scrims")} title={t("publish_scrim")} />
       <form onSubmit={submit} className="card-elysium p-6 space-y-6" data-testid="scrim-create-form">
         <div className="grid md:grid-cols-2 gap-6">
-          <Field label={t("team")} required><select data-testid="scrim-team-select" className="input-elysium" value={teamId || ""} onChange={set("teamId")}>{teams.data.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
+          <Field label={t("team")} required><select data-testid="scrim-team-select" className="input-elysium" value={teamId || ""} onChange={(e) => setF({ ...f, teamId: e.target.value, rank: "" })}>{teams.data.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
+          <Field label={t("game")}><div className="input-elysium flex items-center" data-testid="scrim-game-display">{g ? <GameBadge game={g} /> : "…"}</div></Field>
           <Field label={t("date_time")} required><input data-testid="scrim-date-input" type="datetime-local" required className="input-elysium" value={f.date} onChange={set("date")} /></Field>
-          <Field label={t("level")} required><select data-testid="scrim-level-select" className="input-elysium" value={f.level} onChange={set("level")}>{LEVELS.map((l) => <option key={l} value={l}>{t(`level_${l}`)}</option>)}</select></Field>
+          <Field label={t("rank_wanted")}><RankSelect gameId={team?.gameId} value={f.rank} onChange={(v) => setF({ ...f, rank: v })} testId="scrim-rank-select" /></Field>
           <Field label={t("region")} required><select data-testid="scrim-region-select" className="input-elysium" value={f.region} onChange={set("region")}>{REGIONS.map((r) => <option key={r}>{r}</option>)}</select></Field>
           <Field label={t("format")} required><select data-testid="scrim-format-select" className="input-elysium" value={f.format} onChange={set("format")}>{SCRIM_FORMATS.map((x) => <option key={x}>{x}</option>)}</select></Field>
         </div>

@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Swords, Trophy, Users, Briefcase } from "lucide-react";
+import { ArrowRight, Swords, Trophy, Users, Briefcase, ShieldCheck, UserSearch } from "lucide-react";
 import { useCollection } from "@/hooks/useFirestore";
 import { useFilters } from "@/context/FiltersContext";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
 import { rankOfficial } from "@/lib/db";
 import { TeamCard, ScrimCard, TournamentCard, OfferCard } from "@/components/common/Cards";
+import { LftCard } from "@/pages/Lft";
 import { EmptyState, Skeletons } from "@/components/common/States";
 
 const Section = ({ title, to, children, icon: Icon }) => (
@@ -26,9 +27,10 @@ export default function Home() {
   const scrims = useCollection("scrims");
   const tournaments = useCollection("tournaments");
   const offers = useCollection("offers");
+  const lft = useCollection("lft");
 
   const pick = (col, extra = (x) => true, n = 3) => rankOfficial(apply(col.data).filter(extra)).slice(0, n);
-  const official = rankOfficial([...teams.data, ...scrims.data, ...tournaments.data].filter((x) => x.isOfficial)).slice(0, 3);
+  const official = rankOfficial([...teams.data, ...scrims.data, ...tournaments.data, ...offers.data, ...lft.data].filter((x) => x.isOfficial && x.status !== "closed" && x.status !== "cancelled")).slice(0, 6);
 
   return (
     <div className="space-y-12">
@@ -57,10 +59,11 @@ export default function Home() {
       </section>
 
       {official.length > 0 && (
-        <section data-testid="official-section">
-          <h2 className="section-title">{t("official_announcements")}</h2>
+        <section data-testid="official-section" className="relative border border-[#D8CA82]/40 bg-[#1C1910] p-5 sm:p-6">
+          <img src="/brand/accent-brackets-gold.png" alt="" className="absolute right-4 top-4 h-8 opacity-60 pointer-events-none hidden sm:block" />
+          <h2 className="section-title text-[#D8CA82]"><ShieldCheck className="h-3.5 w-3.5" />{t("official_announcements")}</h2>
           <div className="grid md:grid-cols-3 gap-3 stagger">
-            {official.map((x) => x.slots ? <TournamentCard key={x.id} tournament={x} /> : x.format ? <ScrimCard key={x.id} scrim={x} /> : <TeamCard key={x.id} team={x} />)}
+            {official.map((x) => x.slots ? <TournamentCard key={x.id} tournament={x} /> : x.format ? <ScrimCard key={x.id} scrim={x} /> : x.playerId ? <LftCard key={x.id} lft={x} /> : x.role ? <OfferCard key={x.id} offer={x} /> : <TeamCard key={x.id} team={x} />)}
           </div>
         </section>
       )}
@@ -72,11 +75,14 @@ export default function Home() {
         <Section title={t("upcoming_tournaments")} to="/tournaments" icon={Trophy}>
           {tournaments.loading ? <Skeletons n={2} className="h-24" /> : pick(tournaments).length ? <div className="grid gap-3 stagger">{pick(tournaments).map((x) => <TournamentCard key={x.id} tournament={x} />)}</div> : <EmptyState title={t("no_tournaments")} description={t("no_tournaments_desc")} action={t("create_tournament")} to="/tournaments/new" testId="empty-tournaments-home" />}
         </Section>
-        <Section title={t("open_offers")} to="/teams?tab=offers" icon={Briefcase}>
-          {offers.loading ? <Skeletons n={2} className="h-24" /> : pick(offers, (o) => o.status === "open").length ? <div className="grid gap-3 stagger">{pick(offers, (o) => o.status === "open").map((o) => <OfferCard key={o.id} offer={o} />)}</div> : <EmptyState title={t("no_offers")} description={t("no_offers_desc")} testId="empty-offers-home" />}
-        </Section>
         <Section title={t("featured_teams")} to="/teams" icon={Users}>
           {teams.loading ? <Skeletons n={2} className="h-24" /> : pick(teams).length ? <div className="grid gap-3 stagger">{pick(teams).map((x) => <TeamCard key={x.id} team={x} />)}</div> : <EmptyState title={t("no_teams")} description={t("no_teams_desc")} action={t("create_team")} to="/teams/new" testId="empty-teams-home" />}
+        </Section>
+        <Section title={t("lft_title")} to="/players?tab=lft" icon={UserSearch}>
+          {lft.loading ? <Skeletons n={2} className="h-24" /> : pick(lft, (x) => x.status === "open").length ? <div className="grid gap-3 stagger">{pick(lft, (x) => x.status === "open").map((x) => <LftCard key={x.id} lft={x} />)}</div> : <EmptyState icon={UserSearch} title={t("no_lft")} description={t("no_lft_desc")} action={user ? t("create_lft") : null} to="/lft/new" testId="empty-lft-home" />}
+        </Section>
+        <Section title={t("open_offers")} to="/teams?tab=offers" icon={Briefcase}>
+          {offers.loading ? <Skeletons n={2} className="h-24" /> : pick(offers, (o) => o.status === "open").length ? <div className="grid gap-3 stagger">{pick(offers, (o) => o.status === "open").map((o) => <OfferCard key={o.id} offer={o} />)}</div> : <EmptyState title={t("no_offers")} description={t("no_offers_desc")} testId="empty-offers-home" />}
         </Section>
       </div>
     </div>

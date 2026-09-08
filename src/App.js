@@ -6,9 +6,6 @@ import { FiltersProvider } from "@/context/FiltersContext";
 import { I18nProvider } from "@/i18n";
 import Layout from "@/components/layout/Layout";
 import { Skeletons } from "@/components/common/States";
-import ErrorBoundary from "@/components/common/ErrorBoundary";
-import SetupRequired from "@/components/common/SetupRequired";
-import { firebaseReady } from "@/lib/firebase";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Onboarding from "@/pages/Onboarding";
@@ -23,7 +20,9 @@ import MyApplications from "@/pages/MyApplications";
 import Messages from "@/pages/Messages";
 import Scrims, { ScrimCreate } from "@/pages/Scrims";
 import ScrimDetail from "@/pages/ScrimDetail";
-import Tournaments, { TournamentCreate, TournamentDetail } from "@/pages/Tournaments";
+import Tournaments, { TournamentCreate } from "@/pages/Tournaments";
+import TournamentDetail from "@/pages/TournamentDetail";
+import { LftCreate } from "@/pages/Lft";
 import Admin from "@/pages/Admin";
 import NotFound from "@/pages/NotFound";
 
@@ -44,11 +43,7 @@ const PublicOnly = () => {
 };
 
 function App() {
-  // Sans configuration Firebase, on affiche une page explicative plutôt qu'un écran vide.
-  if (!firebaseReady) return <SetupRequired />;
-
   return (
-    <ErrorBoundary>
     <I18nProvider>
       <AuthProvider>
         <FiltersProvider>
@@ -78,6 +73,7 @@ function App() {
                   <Route path="/messages/:id" element={<Messages />} />
                   <Route path="/scrims/new" element={<ScrimCreate />} />
                   <Route path="/tournaments/new" element={<TournamentCreate />} />
+                  <Route path="/lft/new" element={<LftCreate />} />
                 </Route>
                 <Route element={<Protected admin />}>
                   <Route path="/admin" element={<Admin />} />
@@ -90,7 +86,6 @@ function App() {
         </FiltersProvider>
       </AuthProvider>
     </I18nProvider>
-    </ErrorBoundary>
   );
 }
 

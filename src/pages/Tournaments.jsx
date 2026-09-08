@@ -1,23 +1,19 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { where } from "firebase/firestore";
-import { Plus, Calendar, MapPin, Trophy, Users, ScrollText } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useFilters } from "@/context/FiltersContext";
 import { useI18n } from "@/i18n";
-import { useCollection, useDocument } from "@/hooks/useFirestore";
-import { useGames } from "@/hooks/useGames";
-import { createTournament, rankOfficial, registerTeamToTournament } from "@/lib/db";
+import { useCollection } from "@/hooks/useFirestore";
+import { createTournament, rankOfficial } from "@/lib/db";
 import { REGIONS, TOURNAMENT_FORMATS } from "@/lib/constants";
-import { Avatar, TournamentCard } from "@/components/common/Cards";
-import { GameBadge, OfficialBadge, StatusBadge } from "@/components/common/Badges";
+import { TournamentCard } from "@/components/common/Cards";
 import { EmptyState, Field, PageTitle, Skeletons } from "@/components/common/States";
 import { GameSelector } from "@/components/common/GameSelector";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import NotFound from "./NotFound";
 
-const tStatus = (tr) => { const n = Date.now(), a = new Date(tr.startDate).getTime(), b = new Date(tr.endDate || tr.startDate).getTime() + 86400000; return n < a ? ((tr.registeredTeamIds?.length || 0) >= tr.slots ? "full" : "upcoming") : n > b ? "finished" : "ongoing"; };
+const tStatus = (tr) => tr.status === "finished" ? "finished" : tr.status === "ongoing" ? "ongoing" : (tr.registeredTeamIds?.length || 0) >= tr.slots ? "full" : "registration";
 
 export default function Tournaments() {
   const { t } = useI18n();
@@ -32,7 +28,7 @@ export default function Tournaments() {
       <PageTitle eyebrow={t("nav_tournaments")} title={t("tournaments_title")} right={user && <Link to="/tournaments/new" data-testid="create-tournament-button" className="btn-gold text-xs"><Plus className="h-4 w-4" />{t("create_tournament")}</Link>} />
       <div className="flex flex-wrap items-center gap-2 mb-6 card-elysium p-3" data-testid="tournaments-filters">
         <select data-testid="tournaments-format-filter" className="select-elysium" value={fmt} onChange={(e) => setFmt(e.target.value)}><option value="">{t("all_formats")}</option>{TOURNAMENT_FORMATS.map((f) => <option key={f} value={f}>{t(`format_${f}`)}</option>)}</select>
-        <select data-testid="tournaments-status-filter" className="select-elysium" value={st} onChange={(e) => setSt(e.target.value)}><option value="">{t("all_statuses")}</option>{["upcoming", "ongoing", "finished", "full"].map((s) => <option key={s} value={s}>{t(`status_${s}`)}</option>)}</select>
+        <select data-testid="tournaments-status-filter" className="select-elysium" value={st} onChange={(e) => setSt(e.target.value)}><option value="">{t("all_statuses")}</option>{["registration", "ongoing", "finished", "full"].map((s) => <option key={s} value={s}>{t(`status_${s}`)}</option>)}</select>
       </div>
       {loading ? <Skeletons n={4} /> : list.length === 0 ? <EmptyState title={t("no_tournaments")} description={t("no_tournaments_desc")} action={user ? t("create_tournament") : t("login")} to={user ? "/tournaments/new" : "/login"} testId="empty-tournaments" /> : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3 stagger" data-testid="tournaments-grid">{list.map((x) => <TournamentCard key={x.id} tournament={x} />)}</div>
@@ -77,92 +73,6 @@ export function TournamentCreate() {
         <Field label={t("rules")}><textarea data-testid="tournament-rules-input" className="input-elysium min-h-[160px]" value={f.rules} onChange={set("rules")} maxLength={8000} /></Field>
         <button data-testid="tournament-submit-button" disabled={busy} className="btn-gold">{t("create_tournament")}</button>
       </form>
-    </div>
-  );
-}
-
-export function TournamentDetail() {
-  const { id } = useParams();
-  const { user } = useAuth();
-  const { t, formatDate } = useI18n();
-  const { getGame } = useGames();
-  const { data: tr, loading } = useDocument("tournaments", id);
-  const myTeams = useCollection("teams", [where("ownerId", "==", user?.uid || "-")], [user?.uid], !!user);
-  const memberTeams = useCollection("teams", [where("memberIds", "array-contains", user?.uid || "-")], [user?.uid], !!user);
-  const [open, setOpen] = useState(false);
-  const [pick, setPick] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  if (loading) return <Skeletons n={2} />;
-  if (!tr) return <NotFound />;
-  const g = getGame(tr.gameId);
-  const left = tr.slots - (tr.registeredTeamIds?.length || 0);
-  const status = tStatus(tr);
-  const eligible = myTeams.data.filter((x) => x.gameId === tr.gameId && !tr.registeredTeamIds?.includes(x.id));
-  const alreadyIn = memberTeams.data.filter((x) => tr.registeredTeamIds?.includes(x.id));
-  const hasAnyTeam = memberTeams.data.length > 0;
-
-  const register = async () => {
-    const team = eligible.find((x) => x.id === (pick || eligible[0]?.id));
-    if (!team) return;
-    setBusy(true);
-    try { await registerTeamToTournament(tr.id, team); toast.success(t("team_registered")); setOpen(false); }
-    catch (e) { console.error(e); toast.error(t("err_generic")); } finally { setBusy(false); }
-  };
-
-  return (
-    <div className="space-y-8" data-testid="tournament-detail-page">
-      <div className={`card-elysium relative overflow-hidden p-6 sm:p-8 ${tr.isOfficial ? "card-official" : ""}`} style={{ borderTopColor: g.color, borderTopWidth: 3 }}>
-        <img src="/brand/pattern.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.04] pointer-events-none" />
-        <div className="relative flex flex-wrap items-start justify-between gap-6">
-          <div className="max-w-2xl">
-            <div className="eyebrow mb-2 flex items-center gap-2"><Trophy className="h-3 w-3" />{t("tournament")} {tr.organizerName && `· ${t("by")} ${tr.organizerName}`}</div>
-            <div className="flex items-center gap-3 flex-wrap"><h1 data-testid="tournament-name" className="font-display text-2xl sm:text-3xl uppercase text-white">{tr.name}</h1>{tr.isOfficial && <OfficialBadge />}<StatusBadge status={status} /></div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <GameBadge game={g} size="lg" />
-              <span className="badge border-white/10 text-zinc-300">{t(`format_${tr.format}`)}</span>
-              <span className="badge border-white/10 text-zinc-300"><Calendar className="h-3 w-3" />{formatDate(tr.startDate)}{tr.endDate && ` → ${formatDate(tr.endDate)}`}</span>
-              <span className="badge border-white/10 text-zinc-300"><MapPin className="h-3 w-3" />{tr.region}</span>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="font-display text-4xl text-[#D8CA82]" data-testid="tournament-slots-left">{left}<span className="text-zinc-500 text-base">/{tr.slots}</span></div>
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">{t("slots_left")}</div>
-            {user ? (
-              alreadyIn.length ? <span className="badge bg-emerald-500/15 text-emerald-400 border-emerald-500/30 px-3 py-1" data-testid="tournament-already-registered">{t("registered_with")} {alreadyIn.map((x) => x.name).join(", ")}</span>
-                : left <= 0 ? <span className="badge bg-red-500/15 text-red-400 border-red-500/30 px-3 py-1">{t("status_full")}</span>
-                  : !hasAnyTeam ? <Link to="/teams" data-testid="tournament-join-team-cta" className="btn-outline text-xs"><Users className="h-4 w-4" />{t("join_a_team")}</Link>
-                    : eligible.length ? <button data-testid="tournament-register-button" onClick={() => setOpen(true)} className="btn-gold text-xs"><Trophy className="h-4 w-4" />{t("register_team")}</button>
-                      : <span className="text-xs text-zinc-500" data-testid="tournament-not-captain">{t("only_captain_can_register")}</span>
-            ) : <Link to="/login" data-testid="tournament-login-cta" className="btn-gold text-xs">{t("login_to_register")}</Link>}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-8">
-        <section className="lg:col-span-2">
-          <h2 className="section-title"><ScrollText className="h-3.5 w-3.5" />{t("rules")}</h2>
-          <div className="card-elysium p-5 text-sm text-zinc-300 whitespace-pre-line" data-testid="tournament-rules">{tr.rules || t("no_rules")}</div>
-        </section>
-        <aside>
-          <h2 className="section-title"><Users className="h-3.5 w-3.5" />{t("registered_teams")} ({tr.registeredTeams?.length || 0})</h2>
-          {tr.registeredTeams?.length ? (
-            <div className="space-y-2" data-testid="tournament-registered-teams">
-              {tr.registeredTeams.map((x, i) => <Link key={x.id} to={`/teams/${x.id}`} data-testid={`registered-team-${x.id}`} className="card-elysium p-2.5 flex items-center gap-3"><span className="font-display text-xs text-[#D8CA82] w-5">{i + 1}</span><Avatar src={x.logo} name={x.name} size="h-8 w-8" /><span className="text-sm text-white truncate">{x.name}</span><span className="ml-auto text-[10px] text-zinc-500">{x.region}</span></Link>)}
-            </div>
-          ) : <p className="text-xs text-zinc-500" data-testid="empty-registered-teams">{t("no_registered_teams")}</p>}
-        </aside>
-      </div>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-[#181818] border-white/10 rounded-none" data-testid="register-team-dialog">
-          <DialogHeader><DialogTitle className="font-display uppercase text-white">{t("choose_team_to_register")}</DialogTitle></DialogHeader>
-          <div className="space-y-2">
-            {eligible.map((x) => <button key={x.id} data-testid={`register-team-option-${x.id}`} onClick={() => setPick(x.id)} className={`w-full flex items-center gap-3 p-3 border text-left transition-colors ${(pick || eligible[0].id) === x.id ? "border-[#D8CA82] bg-[#D8CA82]/10" : "border-white/10 hover:border-white/30"}`}><Avatar src={x.logo} name={x.name} size="h-9 w-9" /><div><div className="text-sm text-white font-semibold">{x.name}</div><div className="text-[10px] text-zinc-500 uppercase">{x.region} · {x.memberIds?.length} {t("members")}</div></div></button>)}
-          </div>
-          <button data-testid="register-team-confirm" onClick={register} disabled={busy} className="btn-gold w-full">{t("confirm_registration")}</button>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -7,9 +7,9 @@ const hashColor = (id) => GAME_PALETTE[[...id].reduce((a, c) => a + c.charCodeAt
 export function useGames() {
   const { data, loading } = useCollection("games");
   const games = useMemo(() => {
-    const custom = data.filter((g) => g.status !== "rejected").map((g) => ({ ...g, color: g.color || hashColor(g.id), short: g.name.slice(0, 4).toUpperCase() }));
+    const custom = data.filter((g) => g.status !== "rejected").map((g) => ({ ...g, color: g.color || hashColor(g.id), ranks: null }));
     return [...DEFAULT_GAMES, ...custom];
   }, [data]);
   const byId = useMemo(() => Object.fromEntries(games.map((g) => [g.id, g])), [games]);
-  return { games, byId, loading, getGame: (id) => byId[id] || { id, name: id || "?", color: "#D8CA82", short: "?", status: "validated" } };
+  return { games, byId, loading, getGame: (id) => byId[id] || { id, name: id || "?", color: "#D8CA82", ranks: null, status: "validated" } };
 }

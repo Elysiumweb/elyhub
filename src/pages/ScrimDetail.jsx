@@ -80,7 +80,7 @@ export default function ScrimDetail() {
         <div className="mt-1 grid grid-cols-4 text-[10px] uppercase tracking-wider text-zinc-500">{STEPS.map((st) => <span key={st}>{t(`status_${st}`)}</span>)}</div>
 
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
-          {[[t("game"), <GameBadge game={g} />], [t("date_time"), <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDate(s.date, true)}</span>], [t("region"), <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{s.region}</span>], [t("level"), t(`level_${s.level}`)], [t("format"), s.format]].map(([k, v], i) => (
+          {[[t("game"), <GameBadge game={g} />], [t("date_time"), <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDate(s.date, true)}</span>], [t("region"), <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{s.region}</span>], [t("rank_wanted"), s.rank || t("all_ranks")], [t("format"), s.format]].map(([k, v], i) => (
             <div key={i} className="bg-[#111111] border border-white/10 p-3"><div className="label mb-1">{k}</div><div className="text-white">{v}</div></div>
           ))}
         </div>

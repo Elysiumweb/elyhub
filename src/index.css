@@ -44,22 +44,31 @@
   .font-display { font-family: 'Unbounded', 'Manrope', sans-serif; }
   .bg-pattern {
     background-color: #111111;
-    background-image: radial-gradient(ellipse at top, rgba(216, 202, 130, 0.06), transparent 55%);
+    background-image:
+      radial-gradient(ellipse 60% 40% at 20% -10%, rgba(216, 202, 130, 0.10), transparent 60%),
+      radial-gradient(ellipse 40% 30% at 90% 10%, rgba(216, 202, 130, 0.05), transparent 60%);
   }
+  .bg-pattern::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.035;
+    background-image: url("./brand-pattern.png"); background-size: 420px; mix-blend-mode: screen;
+  }
+  .bg-pattern > * { position: relative; z-index: 1; }
   .eyebrow { @apply text-[10px] font-semibold uppercase tracking-[0.25em] text-[#D8CA82]; }
   .label { @apply block text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400 mb-1.5; }
   .badge { @apply inline-flex items-center gap-1 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider leading-4 whitespace-nowrap; }
 
   .card-elysium {
     @apply bg-[#181818] border border-white/10 transition-[border-color,transform,box-shadow] duration-200;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
   }
   a.card-elysium:hover, .card-elysium.hoverable:hover {
-    @apply border-[#D8CA82]/50 -translate-y-0.5;
-    box-shadow: 0 8px 30px -12px rgba(216, 202, 130, 0.25);
+    @apply border-[#D8CA82]/60 -translate-y-0.5;
+    box-shadow: 0 8px 30px -12px rgba(216, 202, 130, 0.35), inset 0 0 0 1px rgba(216, 202, 130, 0.15);
   }
   .card-official {
-    @apply bg-[#1C1910] border-[#D8CA82]/70;
-    box-shadow: 0 0 0 1px rgba(216, 202, 130, 0.25), 0 10px 40px -20px rgba(216, 202, 130, 0.5);
+    @apply bg-[#1C1910] border-[#D8CA82]/80;
+    box-shadow: 0 0 0 1px rgba(216, 202, 130, 0.3), 0 10px 40px -18px rgba(216, 202, 130, 0.6);
+    background-image: linear-gradient(135deg, rgba(216, 202, 130, 0.08), transparent 45%);
   }
 
   .btn-gold {
@@ -87,8 +96,11 @@
   }
   select.input-elysium { @apply appearance-none cursor-pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23D8CA82' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
 
-  .nav-link { @apply px-3 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-zinc-400 border-b-2 border-transparent transition-colors hover:text-white; }
-  .nav-link-active { @apply text-[#D8CA82] border-[#D8CA82]; }
+  .nav-link { @apply relative px-3 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-zinc-400 transition-colors hover:text-white; }
+  .nav-link::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -2px; height: 2px; background: #D8CA82; transform: scaleX(0); transform-origin: left; transition: transform .2s ease; }
+  .nav-link:hover::after { transform: scaleX(0.4); }
+  .nav-link-active { @apply text-[#D8CA82]; }
+  .nav-link-active::after { transform: scaleX(1) !important; }
 
   .skeleton { @apply bg-[#181818] border border-white/5 relative overflow-hidden; }
   .skeleton::after {

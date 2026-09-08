@@ -19,10 +19,13 @@ export const Navbar = () => {
   const { t, lang, setLang } = useI18n();
   const [open, setOpen] = useState(false);
 
-  const NavItems = ({ onClick }) => links.map((l) => (
-    <NavLink key={l.to} to={l.to} end={l.end} onClick={onClick} data-testid={`nav-${l.key.replace("nav_", "")}`}
-      className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : ""}`}>{t(l.key)}</NavLink>
-  ));
+  const NavItems = ({ onClick }) => (<>
+    {links.map((l) => (
+      <NavLink key={l.to} to={l.to} end={l.end} onClick={onClick} data-testid={`nav-${l.key.replace("nav_", "")}`}
+        className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : ""}`}>{t(l.key)}</NavLink>
+    ))}
+    {isAdmin && <NavLink to="/admin" onClick={onClick} data-testid="nav-admin" className={({ isActive }) => `nav-link !text-[#D8CA82] inline-flex items-center gap-1 ${isActive ? "nav-link-active" : ""}`}><ShieldCheck className="h-3.5 w-3.5" />{t("nav_admin")}</NavLink>}
+  </>);
 
   return (
     <header className="sticky top-0 z-40 bg-[#111111]/95 backdrop-blur-md border-b border-[#D8CA82]/20">

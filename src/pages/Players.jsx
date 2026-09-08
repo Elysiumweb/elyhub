@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { where } from "firebase/firestore";
-import { MapPin, Languages, Gamepad2, MessageSquare, Search } from "lucide-react";
+import { MapPin, Languages, Gamepad2, MessageSquare, Search, UserSearch } from "lucide-react";
 import { useDocument, useCollection } from "@/hooks/useFirestore";
 import { useGames } from "@/hooks/useGames";
 import { useAuth } from "@/context/AuthContext";
 import { useFilters } from "@/context/FiltersContext";
 import { useI18n } from "@/i18n";
-import { findOrCreateConversation } from "@/lib/db";
+import { findOrCreateConversation, rankOfficial } from "@/lib/db";
+import { LftCard } from "./Lft";
 import { Avatar, PlayerCard } from "@/components/common/Cards";
 import { GameBadge } from "@/components/common/Badges";
 import { EmptyState, PageTitle, Skeletons } from "@/components/common/States";
@@ -15,15 +16,30 @@ import NotFound from "./NotFound";
 
 export function Players() {
   const { t } = useI18n();
+  const { user } = useAuth();
   const { apply, filters } = useFilters();
+  const [params, setParams] = useSearchParams();
+  const tab = params.get("tab") || "players";
   const [q, setQ] = useState("");
   const { data, loading } = useCollection("users");
+  const lft = useCollection("lft");
   const list = apply(data.filter((p) => p.onboarded && (!q || p.pseudo?.toLowerCase().includes(q.toLowerCase()))), { gameKey: "__none" })
     .filter((p) => !filters.gameId || (p.games || []).includes(filters.gameId));
+  const lftList = rankOfficial(apply(lft.data)).filter((x) => x.status === "open" && (!q || x.playerPseudo?.toLowerCase().includes(q.toLowerCase())));
   return (
     <div>
-      <PageTitle eyebrow={t("nav_players")} title={t("players_title")} right={<div className="flex items-center gap-2 w-64"><Search className="h-4 w-4 text-zinc-500" /><input data-testid="players-search-input" className="input-elysium h-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("search")} /></div>} />
-      {loading ? <Skeletons n={4} className="h-20" /> : list.length === 0 ? <EmptyState title={t("no_players")} description={t("no_players_desc")} testId="empty-players" /> : (
+      <PageTitle eyebrow={t("nav_players")} title={tab === "lft" ? t("lft_title") : t("players_title")} right={<>
+        <div className="flex items-center gap-2 w-56"><Search className="h-4 w-4 text-zinc-500" /><input data-testid="players-search-input" className="input-elysium h-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("search")} /></div>
+        {user && <Link to="/lft/new" data-testid="create-lft-button" className="btn-gold text-xs"><UserSearch className="h-4 w-4" />{t("create_lft")}</Link>}
+      </>} />
+      <div className="flex border-b border-white/10 mb-6">
+        <button data-testid="players-tab-players" onClick={() => setParams({ tab: "players" })} className={`tab-btn ${tab === "players" ? "tab-btn-active" : ""}`}>{t("nav_players")} <span className="text-zinc-600 ml-1">{list.length}</span></button>
+        <button data-testid="players-tab-lft" onClick={() => setParams({ tab: "lft" })} className={`tab-btn ${tab === "lft" ? "tab-btn-active" : ""}`}>{t("lft_short")} <span className="text-zinc-600 ml-1">{lftList.length}</span></button>
+      </div>
+      {tab === "lft" ? (
+        lft.loading ? <Skeletons n={4} className="h-24" /> : lftList.length === 0 ? <EmptyState icon={UserSearch} title={t("no_lft")} description={t("no_lft_desc")} action={user ? t("create_lft") : t("login")} to={user ? "/lft/new" : "/login"} testId="empty-lft" />
+          : <div className="grid md:grid-cols-2 gap-3 stagger" data-testid="lft-grid">{lftList.map((x) => <LftCard key={x.id} lft={x} />)}</div>
+      ) : loading ? <Skeletons n={4} className="h-20" /> : list.length === 0 ? <EmptyState title={t("no_players")} description={t("no_players_desc")} testId="empty-players" /> : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3 stagger" data-testid="players-grid">{list.map((p) => <PlayerCard key={p.id} player={p} />)}</div>
       )}
     </div>

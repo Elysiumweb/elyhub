@@ -85,11 +85,12 @@ export const ScrimCard = ({ scrim }) => {
             {scrim.isOfficial && <OfficialBadge />}
             {scrim.opponentTeamName && <span className="text-xs text-zinc-400">vs <b className="text-white">{scrim.opponentTeamName}</b></span>}
           </div>
+          <div className="mt-1 text-xs font-semibold" style={{ color: g.color }}>{g.name}</div>
           <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-400">
             <GameBadge game={g} />
             <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDate(scrim.date, true)}</span>
             <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{scrim.region}</span>
-            <span className="badge border-white/10 text-zinc-300">{t(`level_${scrim.level}`)}</span>
+            <span className="badge border-white/10 text-zinc-300">{scrim.rank || t("all_ranks")}</span>
             <span className="badge border-white/10 text-zinc-300">{scrim.format}</span>
           </div>
         </div>
