@@ -83,14 +83,30 @@ Les images sont stockées dans **Firebase Storage** (URL), plus en base64 dans F
 
 ## Fonctions serveur / Vercel
 
-Le dossier `api/` contient les fonctions Vercel (edge) :
+Le dossier `api/` contient les fonctions Vercel :
 
 | Fichier | Rôle |
 |---|---|
 | `api/sitemap.ts` | `sitemap.xml` dynamique (routes statiques + contenus Firestore) |
-| `api/og-image.tsx` | image Open Graph 1200×630 générée par fiche (équipe/tournoi/joueur) |
+| `api/og-image.ts` | image Open Graph 1200×630 générée par fiche — runtime **nodejs** (pas edge) : le bundler Edge ne sait pas embarquer `@vercel/og` hors Next.js |
 | `api/ical/[teamId].ts` | flux iCal des scrims d'une équipe |
 | `middleware.ts` | routage SPA + **vraies 404** (URL inconnues → `/404.html`, statut 404) |
+
+Le middleware ne s'exécute QUE sur les routes « page » (son `config.matcher` exclut
+`/api`, `/static`, `/brand` et tout fichier avec extension) : les fichiers statiques
+sont servis directement par Vercel avec leur bon Content-Type. Ne jamais répondre
+soi-même aux chemins statiques depuis un middleware : la réponse remplacerait le
+fichier (MIME vide + `X-Content-Type-Options: nosniff` → écran noir).
+
+### Déploiement Vercel — pièges connus
+
+1. **Deployment Protection** : si « Vercel Authentication » est activée (Settings →
+   Deployment Protection), les sous-ressources sont redirigées vers
+   `vercel.com/sso-api` — le manifest échoue en CORS et les visiteurs non
+   authentifiés voient un mur de connexion. Pour un site public :
+   **désactiver Vercel Authentication** (production + previews).
+2. **Variables d'environnement** : les valeurs sont inlinées au build — ajouter les
+   variables puis **redéployer** (voir [Variables d'environnement](#variables-denvironnement)).
 
 `functions/` contient les Cloud Functions Firebase de référence (notifications, alertes,
 e-mails, synchronisation de recherche Meilisearch, quotas anti-spam) — à déployer avec
