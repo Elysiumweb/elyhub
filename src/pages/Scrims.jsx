@@ -8,12 +8,14 @@ import { useFilters } from "@/context/FiltersContext";
 import { useI18n } from "@/i18n";
 import { useCollection } from "@/hooks/useFirestore";
 import { createScrim, rankOfficial } from "@/lib/db";
-import { REGIONS, SCRIM_FORMATS } from "@/lib/constants";
+import { REGIONS, SCRIM_FORMATS, slugToGameId } from "@/lib/constants";
 import { ScrimCard } from "@/components/common/Cards";
 import { GameBadge } from "@/components/common/Badges";
 import { RankSelect } from "@/components/common/RankSelect";
 import { useGames } from "@/hooks/useGames";
 import { EmptyState, Field, PageTitle, Skeletons } from "@/components/common/States";
+import { ErrorState } from "@/components/common/ErrorState";
+import Seo from "@/components/common/Seo";
 
 const STATUSES = ["all", "open", "proposed", "accepted", "played", "cancelled"];
 
@@ -24,11 +26,15 @@ export default function Scrims() {
   const [status, setStatus] = useState("open");
   const [rank, setRank] = useState("");
   const [date, setDate] = useState("");
-  const { data, loading } = useCollection("scrims");
-  const list = rankOfficial(apply(data)).filter((s) => (status === "all" || s.status === status) && (!rank || s.rank === rank) && (!date || (s.date || "").startsWith(date)));
+  const [params] = useSearchParams();
+  const urlGame = slugToGameId(params.get("game") || "");
+  const { data, loading, error, reload } = useCollection("scrims");
+  const overrides = { gameId: urlGame || undefined };
+  const list = rankOfficial(apply(data, undefined, overrides)).filter((s) => (status === "all" || s.status === status) && (!rank || s.rank === rank) && (!date || (s.date || "").startsWith(date)));
 
   return (
     <div>
+      <Seo title={t("scrims_title")} description={t("scrims_title")} path="/scrims" />
       <PageTitle eyebrow={t("nav_scrims")} title={t("scrims_title")} right={user && <Link to="/scrims/new" data-testid="create-scrim-button" className="btn-gold text-xs"><Plus className="h-4 w-4" />{t("publish_scrim")}</Link>} />
       <div className="flex flex-wrap items-center gap-2 mb-6 card-elysium p-3" data-testid="scrims-filters">
         <div className="flex flex-wrap gap-1">
@@ -39,7 +45,7 @@ export default function Scrims() {
           <input data-testid="scrims-date-filter" type="date" className="select-elysium" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
       </div>
-      {loading ? <Skeletons n={4} /> : list.length === 0 ? <EmptyState title={t("no_scrims")} description={t("no_scrims_desc")} action={user ? t("publish_scrim") : t("login")} to={user ? "/scrims/new" : "/login"} testId="empty-scrims" /> : (
+      {error ? <ErrorState error={error} onRetry={reload} testId="error-scrims" /> : loading ? <Skeletons n={4} /> : list.length === 0 ? <EmptyState title={t("no_scrims")} description={t("no_scrims_desc")} action={user ? t("publish_scrim") : t("login")} to={user ? "/scrims/new" : "/login"} testId="empty-scrims" /> : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3 stagger" data-testid="scrims-grid">{list.map((s) => <ScrimCard key={s.id} scrim={s} />)}</div>
       )}
     </div>
@@ -68,7 +74,7 @@ export function ScrimCreate() {
     if (!team) return;
     setBusy(true);
     try { const ref = await createScrim({ ...f, teamId }, team, user.uid); toast.success(t("scrim_published")); nav(`/scrims/${ref.id}`); }
-    catch (err) { console.error(err); toast.error(t("err_generic")); } finally { setBusy(false); }
+    catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };
 
   return (

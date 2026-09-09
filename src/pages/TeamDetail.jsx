@@ -11,6 +11,7 @@ import { findOrCreateConversation, rankOfficial } from "@/lib/db";
 import { Avatar, OfferCard } from "@/components/common/Cards";
 import { GameBadge, OfficialBadge } from "@/components/common/Badges";
 import { EmptyState, Skeletons } from "@/components/common/States";
+import Seo, { ldTeam } from "@/components/common/Seo";
 import NotFound from "./NotFound";
 
 export default function TeamDetail() {
@@ -38,11 +39,12 @@ export default function TeamDetail() {
       const owner = team.members?.find((m) => m.uid === team.ownerId) || { uid: team.ownerId, pseudo: team.name };
       const cid = await findOrCreateConversation({ me: profile, other: { id: team.ownerId, pseudo: owner.pseudo, avatar: team.logo }, teamId: team.id, teamName: team.name, title: team.name });
       nav(`/messages/${cid}`);
-    } catch (e) { console.error(e); toast.error(t("err_generic")); } finally { setBusy(false); }
+    } catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };
 
   return (
     <div className="space-y-8" data-testid="team-detail-page">
+      <Seo title={`${team.name} — ${g.name} | ElyHub`} description={team.description || `${team.name} · ${g.name}`} path={`/teams/${team.id}`} image={team.logo || null} jsonLd={ldTeam(team, g)} />
       <div className={`card-elysium relative overflow-hidden p-6 sm:p-8 ${team.isOfficial ? "card-official" : ""}`} style={{ borderTopColor: g.color, borderTopWidth: 3 }}>
         <img src="/brand/pattern.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.04] pointer-events-none" />
         <div className="relative flex flex-wrap items-start gap-6">

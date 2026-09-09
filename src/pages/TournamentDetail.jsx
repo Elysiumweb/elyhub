@@ -14,6 +14,7 @@ import { GameBadge, OfficialBadge, StatusBadge } from "@/components/common/Badge
 import { EmptyState, Skeletons } from "@/components/common/States";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EliminationBracket, RoundsList, Standings } from "@/components/tournament/Bracket";
+import Seo, { ldTournament } from "@/components/common/Seo";
 import { MatchDialog, MatchCard } from "@/components/tournament/Match";
 import NotFound from "./NotFound";
 
@@ -45,7 +46,7 @@ export default function TournamentDetail() {
   const liveMatch = activeMatch ? matches.data.find((m) => m.id === activeMatch.id) || activeMatch : null;
   const disputes = matches.data.filter((m) => m.status === "disputed");
   const allDone = matches.data.length > 0 && matches.data.every((m) => m.status === "done");
-  const run = async (fn, msg) => { setBusy(true); try { await fn(); msg && toast.success(msg); } catch (e) { console.error(e); toast.error(t("err_generic")); } finally { setBusy(false); } };
+  const run = async (fn, msg) => { setBusy(true); try { await fn(); msg && toast.success(msg); } catch { toast.error(t("err_generic")); } finally { setBusy(false); } };
 
   const register = () => run(async () => { const team = eligible.find((x) => x.id === (pick || eligible[0]?.id)); if (!team) return; await registerTeamToTournament(tr.id, team); setOpen(false); }, t("team_registered"));
   const start = () => run(async () => {
@@ -64,6 +65,7 @@ export default function TournamentDetail() {
 
   return (
     <div className="space-y-8" data-testid="tournament-detail-page">
+      <Seo title={`${tr.name} — ${g.name} | ElyHub`} description={tr.description || tr.rules || `${tr.name} · ${g.name}`} path={`/tournaments/${tr.id}`} jsonLd={ldTournament(tr, g, tr.startDate)} />
       <div className={`card-elysium relative overflow-hidden p-6 sm:p-8 ${tr.isOfficial ? "card-official" : ""}`} style={{ borderTopColor: g.color, borderTopWidth: 3 }}>
         <img src="/brand/pattern.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.04] pointer-events-none" />
         <div className="relative flex flex-wrap items-start justify-between gap-6">

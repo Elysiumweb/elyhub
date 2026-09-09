@@ -1,4 +1,4 @@
-// Resize an image file to a small base64 data URL (stored directly in Firestore)
+// Redimensionne une image en data-URL (Storage d'abord, base64 en secours).
 export function fileToBase64(file, max = 256) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -19,3 +19,6 @@ export function fileToBase64(file, max = 256) {
     reader.readAsDataURL(file);
   });
 }
+
+export const isDataUrl = (v) => typeof v === "string" && v.startsWith("data:");
+export const isHttpUrl = (v) => typeof v === "string" && /^https?:\/\//.test(v);

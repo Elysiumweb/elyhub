@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { where } from "firebase/firestore";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -8,9 +8,11 @@ import { useFilters } from "@/context/FiltersContext";
 import { useI18n } from "@/i18n";
 import { useCollection } from "@/hooks/useFirestore";
 import { createTournament, rankOfficial } from "@/lib/db";
-import { REGIONS, TOURNAMENT_FORMATS } from "@/lib/constants";
+import { REGIONS, TOURNAMENT_FORMATS, slugToGameId } from "@/lib/constants";
 import { TournamentCard } from "@/components/common/Cards";
 import { EmptyState, Field, PageTitle, Skeletons } from "@/components/common/States";
+import { ErrorState } from "@/components/common/ErrorState";
+import Seo from "@/components/common/Seo";
 import { GameSelector } from "@/components/common/GameSelector";
 
 const tStatus = (tr) => tr.status === "finished" ? "finished" : tr.status === "ongoing" ? "ongoing" : (tr.registeredTeamIds?.length || 0) >= tr.slots ? "full" : "registration";
@@ -21,16 +23,19 @@ export default function Tournaments() {
   const { apply } = useFilters();
   const [fmt, setFmt] = useState("");
   const [st, setSt] = useState("");
-  const { data, loading } = useCollection("tournaments");
-  const list = rankOfficial(apply(data)).filter((x) => (!fmt || x.format === fmt) && (!st || tStatus(x) === st));
+  const [params] = useSearchParams();
+  const urlGame = slugToGameId(params.get("game") || "");
+  const { data, loading, error, reload } = useCollection("tournaments");
+  const list = rankOfficial(apply(data, undefined, { gameId: urlGame || undefined })).filter((x) => (!fmt || x.format === fmt) && (!st || tStatus(x) === st));
   return (
     <div>
+      <Seo title={t("tournaments_title")} description={t("tournaments_title")} path="/tournaments" />
       <PageTitle eyebrow={t("nav_tournaments")} title={t("tournaments_title")} right={user && <Link to="/tournaments/new" data-testid="create-tournament-button" className="btn-gold text-xs"><Plus className="h-4 w-4" />{t("create_tournament")}</Link>} />
       <div className="flex flex-wrap items-center gap-2 mb-6 card-elysium p-3" data-testid="tournaments-filters">
         <select data-testid="tournaments-format-filter" className="select-elysium" value={fmt} onChange={(e) => setFmt(e.target.value)}><option value="">{t("all_formats")}</option>{TOURNAMENT_FORMATS.map((f) => <option key={f} value={f}>{t(`format_${f}`)}</option>)}</select>
         <select data-testid="tournaments-status-filter" className="select-elysium" value={st} onChange={(e) => setSt(e.target.value)}><option value="">{t("all_statuses")}</option>{["registration", "ongoing", "finished", "full"].map((s) => <option key={s} value={s}>{t(`status_${s}`)}</option>)}</select>
       </div>
-      {loading ? <Skeletons n={4} /> : list.length === 0 ? <EmptyState title={t("no_tournaments")} description={t("no_tournaments_desc")} action={user ? t("create_tournament") : t("login")} to={user ? "/tournaments/new" : "/login"} testId="empty-tournaments" /> : (
+      {error ? <ErrorState error={error} onRetry={reload} testId="error-tournaments" /> : loading ? <Skeletons n={4} /> : list.length === 0 ? <EmptyState title={t("no_tournaments")} description={t("no_tournaments_desc")} action={user ? t("create_tournament") : t("login")} to={user ? "/tournaments/new" : "/login"} testId="empty-tournaments" /> : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3 stagger" data-testid="tournaments-grid">{list.map((x) => <TournamentCard key={x.id} tournament={x} />)}</div>
       )}
     </div>
@@ -51,10 +56,10 @@ export function TournamentCreate() {
     setBusy(true);
     try {
       const org = teams.data.find((x) => x.id === f.organizerTeamId);
-      const { organizerTeamId, ...rest } = f;
+      const { organizerTeamId: _organizerTeamId, ...rest } = f;
       const ref = await createTournament({ ...rest, name: f.name.trim(), slots: Number(f.slots) }, user.uid, org);
       toast.success(t("tournament_created")); nav(`/tournaments/${ref.id}`);
-    } catch (err) { console.error(err); toast.error(t("err_generic")); } finally { setBusy(false); }
+    } catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };
   return (
     <div className="max-w-3xl">

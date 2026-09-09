@@ -1,0 +1,29 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Images publiques (logos, bannières) : lecture publique, écriture par le propriétaire
+    match /teams/{teamId}/{file} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        firestore.get(/databases/(default)/documents/teams/$(teamId)).data.ownerId == request.auth.uid;
+    }
+    match /avatars/{uid}/{file} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /banners/{file} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    // Preuves de score : visibles des participants et de la modération
+    match /proofs/{matchId}/{file} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    // Taille max 5 Mo, types images uniquement
+    match /{allPaths=**} {
+      allow read: if false;
+      allow write: if false;
+    }
+  }
+}

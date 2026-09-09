@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /account
+Disallow: /dashboard
+Disallow: /messages
+Disallow: /admin
+Disallow: /onboarding
+Disallow: /applications
+Disallow: /lft/new
+
+Sitemap: %SITE_URL%/api/sitemap.xml

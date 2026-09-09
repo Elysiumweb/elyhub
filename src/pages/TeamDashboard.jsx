@@ -45,7 +45,7 @@ export default function TeamDashboard() {
       await updateApplication(a.id, { status });
       if (status === "accepted") await addTeamMember(team.id, { uid: a.playerId, pseudo: a.playerPseudo, avatar: a.playerAvatar || null, role: a.offerRole });
       toast.success(t("saved"));
-    } catch (e) { console.error(e); toast.error(t("err_generic")); }
+    } catch { toast.error(t("err_generic")); }
   };
   const message = async (a) => {
     const cid = await findOrCreateConversation({ me: profile, other: { id: a.playerId, pseudo: a.playerPseudo, avatar: a.playerAvatar }, teamId: team.id, teamName: team.name, title: a.playerPseudo });

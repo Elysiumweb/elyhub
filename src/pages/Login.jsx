@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { auth, googleProvider } from "@/lib/firebase";
 import { useI18n } from "@/i18n";
 import { Field } from "@/components/common/States";
+import Seo from "@/components/common/Seo";
 
 const authError = (e, t) => {
   const map = { "auth/invalid-credential": "err_invalid_credentials", "auth/user-not-found": "err_invalid_credentials", "auth/wrong-password": "err_invalid_credentials",
@@ -42,6 +43,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-[#111111]">
+      <Seo title={t("login")} path="/login" noindex />
       <div className="hidden lg:flex relative flex-col justify-between p-12 border-r border-[#D8CA82]/20 overflow-hidden">
         <img src="/brand/pattern.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.07]" />
         <img src="/brand/accent-blade.png" alt="" className="absolute -right-20 -bottom-24 w-[560px] opacity-40 pointer-events-none" />

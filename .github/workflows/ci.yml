@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - name: Tests
+        run: CI=true npm test -- --watchAll=false
+      - name: Build
+        run: npm run build
+        env:
+          # Valeurs vides : la liste CLIENT_ENV_VARS de craco.config.js ignore les
+          # variables absentes/vides, et src/lib/firebase.js considère alors Firebase
+          # comme non configuré (isFirebaseConfigured = false, clé de substitution
+          # inoffensive "firebase-not-configured"). Le build reste donc déterministe
+          # et ne contient aucun secret.
+          FIREBASE_API_KEY: ""
+          FIREBASE_PROJECT_ID: ""
