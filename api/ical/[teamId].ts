@@ -61,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         `DTSTART;TZID=${tzid}:${stamp(dt)}`,
         `SUMMARY:${summary.replace(/,/g, "\\,")}`,
         desc && `DESCRIPTION:${desc.replace(/\n/g, "\\n").replace(/,/g, "\\,")}`,
-        `LOCATION:https://elysium.gg`,
+        `LOCATION:https://elysium-esport.fr`,
         "END:VEVENT",
       ]
         .filter(Boolean)

@@ -5,7 +5,7 @@ import StaticPage from "@/components/common/StaticPage";
 import { useI18n } from "@/i18n";
 import { Field } from "@/components/common/States";
 
-const CONTACT_EMAIL = "contact@elysium.gg";
+const CONTACT_EMAIL = "contact@elysium-esport.fr";
 
 export default function Contact() {
   const { t } = useI18n();

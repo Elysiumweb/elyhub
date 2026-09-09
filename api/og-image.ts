@@ -55,7 +55,7 @@ export default async function handler(req) {
       ]),
       e("div", { display: "flex", justifyContent: "space-between", alignItems: "center" }, [
         e("span", { fontSize: "22px", color: "#71717a" }, "Elysium — la plateforme des structures esport"),
-        e("span", { fontSize: "22px", color, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700 }, "elysium.gg"),
+        e("span", { fontSize: "22px", color, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700 }, "elysium-esport.fr"),
       ]),
     ]),
     { width: 1200, height: 630 },

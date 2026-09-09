@@ -64,7 +64,7 @@ export default function Login() {
           </div>
           <h2 className="font-display text-xl uppercase text-white mb-6">{mode === "login" ? t("welcome_back") : t("create_account")}</h2>
           <form onSubmit={submit} className="space-y-4">
-            <Field label={t("email")} required><input data-testid="auth-email-input" type="email" required className="input-elysium" value={form.email} onChange={set("email")} placeholder="player@elysium.gg" /></Field>
+            <Field label={t("email")} required><input data-testid="auth-email-input" type="email" required className="input-elysium" value={form.email} onChange={set("email")} placeholder="player@elysium-esport.fr" /></Field>
             <Field label={t("password")} required><input data-testid="auth-password-input" type="password" required minLength={6} className="input-elysium" value={form.password} onChange={set("password")} placeholder="••••••••" /></Field>
             <button data-testid="auth-submit-button" disabled={busy} className="btn-gold w-full">{mode === "login" ? t("login") : t("register")}</button>
           </form>
