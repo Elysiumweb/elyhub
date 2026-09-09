@@ -8,12 +8,13 @@ import { rankOfficial } from "@/lib/db";
 import { TeamCard, ScrimCard, TournamentCard, OfferCard } from "@/components/common/Cards";
 import { LftCard } from "@/pages/Lft";
 import { EmptyState, Skeletons } from "@/components/common/States";
+import Seo from "@/components/common/Seo";
 
 const Section = ({ title, to, children, icon: Icon }) => (
   <section>
     <div className="flex items-center justify-between mb-3">
       <h2 className="section-title mb-0"><Icon className="h-3.5 w-3.5" />{title}</h2>
-      <Link to={to} className="text-xs text-[#D8CA82] hover:underline inline-flex items-center gap-1">{/* eslint-disable-line */}<ArrowRight className="h-3 w-3" /></Link>
+      <Link to={to} className="text-xs text-[#D8CA82] hover:underline inline-flex items-center gap-1"><ArrowRight className="h-3 w-3" /></Link>
     </div>
     {children}
   </section>
@@ -29,11 +30,12 @@ export default function Home() {
   const offers = useCollection("offers");
   const lft = useCollection("lft");
 
-  const pick = (col, extra = (x) => true, n = 3) => rankOfficial(apply(col.data).filter(extra)).slice(0, n);
+  const pick = (col, extra = () => true, n = 3) => rankOfficial(apply(col.data).filter(extra)).slice(0, n);
   const official = rankOfficial([...teams.data, ...scrims.data, ...tournaments.data, ...offers.data, ...lft.data].filter((x) => x.isOfficial && x.status !== "closed" && x.status !== "cancelled")).slice(0, 6);
 
   return (
     <div className="space-y-12">
+      <Seo title="ElyHub — Elysium" description={t("home_hero_desc")} path="/" />
       <section className="relative overflow-hidden border border-[#D8CA82]/25 bg-[#141414] p-8 sm:p-12">
         <img src="/brand/pattern.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.06] pointer-events-none" />
         <img src="/brand/accent-blade.png" alt="" className="absolute -right-16 -top-16 w-[420px] opacity-30 pointer-events-none hidden md:block" />

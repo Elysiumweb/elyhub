@@ -8,10 +8,13 @@ import { useAuth } from "@/context/AuthContext";
 import { useFilters } from "@/context/FiltersContext";
 import { useI18n } from "@/i18n";
 import { findOrCreateConversation, rankOfficial } from "@/lib/db";
+import { slugToGameId } from "@/lib/constants";
 import { LftCard } from "./Lft";
 import { Avatar, PlayerCard } from "@/components/common/Cards";
 import { GameBadge } from "@/components/common/Badges";
 import { EmptyState, PageTitle, Skeletons } from "@/components/common/States";
+import { ErrorState } from "@/components/common/ErrorState";
+import Seo, { ldPerson } from "@/components/common/Seo";
 import NotFound from "./NotFound";
 
 export function Players() {
@@ -20,14 +23,17 @@ export function Players() {
   const { apply, filters } = useFilters();
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") || "players";
+  const urlGame = slugToGameId(params.get("game") || "");
   const [q, setQ] = useState("");
-  const { data, loading } = useCollection("users");
+  const { data, loading, error, reload } = useCollection("users");
   const lft = useCollection("lft");
+  const gameId = urlGame || filters.gameId;
   const list = apply(data.filter((p) => p.onboarded && (!q || p.pseudo?.toLowerCase().includes(q.toLowerCase()))), { gameKey: "__none" })
-    .filter((p) => !filters.gameId || (p.games || []).includes(filters.gameId));
-  const lftList = rankOfficial(apply(lft.data)).filter((x) => x.status === "open" && (!q || x.playerPseudo?.toLowerCase().includes(q.toLowerCase())));
+    .filter((p) => !gameId || (p.games || []).includes(gameId));
+  const lftList = rankOfficial(apply(lft.data, undefined, { gameId: urlGame || undefined })).filter((x) => x.status === "open" && (!q || x.playerPseudo?.toLowerCase().includes(q.toLowerCase())));
   return (
     <div>
+      <Seo title={tab === "lft" ? t("lft_title") : t("players_title")} description={tab === "lft" ? t("lft_title") : t("players_title")} path={tab === "lft" ? "/players?tab=lft" : "/players"} />
       <PageTitle eyebrow={t("nav_players")} title={tab === "lft" ? t("lft_title") : t("players_title")} right={<>
         <div className="flex items-center gap-2 w-56"><Search className="h-4 w-4 text-zinc-500" /><input data-testid="players-search-input" className="input-elysium h-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("search")} /></div>
         {user && <Link to="/lft/new" data-testid="create-lft-button" className="btn-gold text-xs"><UserSearch className="h-4 w-4" />{t("create_lft")}</Link>}
@@ -37,9 +43,9 @@ export function Players() {
         <button data-testid="players-tab-lft" onClick={() => setParams({ tab: "lft" })} className={`tab-btn ${tab === "lft" ? "tab-btn-active" : ""}`}>{t("lft_short")} <span className="text-zinc-600 ml-1">{lftList.length}</span></button>
       </div>
       {tab === "lft" ? (
-        lft.loading ? <Skeletons n={4} className="h-24" /> : lftList.length === 0 ? <EmptyState icon={UserSearch} title={t("no_lft")} description={t("no_lft_desc")} action={user ? t("create_lft") : t("login")} to={user ? "/lft/new" : "/login"} testId="empty-lft" />
+        lft.error ? <ErrorState error={lft.error} onRetry={lft.reload} testId="error-lft" /> : lft.loading ? <Skeletons n={4} className="h-24" /> : lftList.length === 0 ? <EmptyState icon={UserSearch} title={t("no_lft")} description={t("no_lft_desc")} action={user ? t("create_lft") : t("login")} to={user ? "/lft/new" : "/login"} testId="empty-lft" />
           : <div className="grid md:grid-cols-2 gap-3 stagger" data-testid="lft-grid">{lftList.map((x) => <LftCard key={x.id} lft={x} />)}</div>
-      ) : loading ? <Skeletons n={4} className="h-20" /> : list.length === 0 ? <EmptyState title={t("no_players")} description={t("no_players_desc")} testId="empty-players" /> : (
+      ) : error ? <ErrorState error={error} onRetry={reload} testId="error-players" /> : loading ? <Skeletons n={4} className="h-20" /> : list.length === 0 ? <EmptyState title={t("no_players")} description={t("no_players_desc")} testId="empty-players" /> : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3 stagger" data-testid="players-grid">{list.map((p) => <PlayerCard key={p.id} player={p} />)}</div>
       )}
     </div>
@@ -67,6 +73,7 @@ export default function PlayerProfile() {
 
   return (
     <div className="space-y-8" data-testid="player-profile-page">
+      <Seo title={`${p.pseudo} — ${t("nav_players")} | ElyHub`} description={p.bio || `${p.pseudo} · ElyHub`} path={`/players/${p.id}`} image={p.avatar || null} jsonLd={ldPerson(p)} />
       <div className="card-elysium relative overflow-hidden p-6 sm:p-8 flex flex-wrap items-start gap-6">
         <img src="/brand/pattern.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.04] pointer-events-none" />
         <Avatar src={p.avatar} name={p.pseudo} round size="h-24 w-24" className="text-2xl relative" />

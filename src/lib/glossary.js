@@ -1,0 +1,42 @@
+// Glossaire e-sport — accessible sur /glossaire et via infobulles dans l'UI (Term).
+export const GLOSSARY = [
+  { id: "scrim", term: "Scrim", aliases: ["scrim", "scrims"], fr: "Match d'entraînement entre deux équipes, sans enjeu officiel. Le scrim sert à progresser et à tester des stratégies.", en: "A practice match between two teams, with nothing official at stake. Scrims are used to improve and test strategies." },
+  { id: "lft", term: "LFT", aliases: ["lft", "looking for team"], fr: "« Looking For Team » : un joueur cherche une équipe à rejoindre.", en: "\"Looking For Team\": a player looking for a team to join." },
+  { id: "bo", term: "BO1 / BO3 / BO5", aliases: ["bo1", "bo3", "bo5", "bo2", "bo7"], fr: "« Best Of » : série au meilleur des N manches. BO1 = une seule carte, BO3 = la première équipe à 2 victoires l'emporte.", en: "\"Best Of\": a series played over N maps. BO1 = single map, BO3 = first team to 2 map wins takes the series." },
+  { id: "igl", term: "IGL", aliases: ["igl", "in-game leader"], fr: "« In-Game Leader » : le joueur qui dirige l'équipe en jeu (stratégie, appels, adaptations).", en: "\"In-Game Leader\": the player who leads the team in game (strategy, calls, adaptations)." },
+  { id: "roster", term: "Roster", aliases: ["roster", "effectif"], fr: "L'effectif d'une équipe : la liste de ses joueurs et de son encadrement.", en: "A team's line-up: its players and staff." },
+  { id: "bracket", term: "Bracket", aliases: ["bracket", "tableau"], fr: "Le tableau d'un tournoi : l'arbre des matchs qui mène à la finale.", en: "A tournament's tree of matches leading to the final." },
+  { id: "seeding", term: "Seeding", aliases: ["seeding", "tete de serie", "têtes de série"], fr: "Classement des équipes avant un tirage, pour que les meilleures ne se rencontrent pas trop tôt.", en: "Ranking of teams before a draw, so the strongest don't meet too early." },
+  { id: "veto", term: "Veto de maps", aliases: ["veto"], fr: "Phase où chaque équipe bannit ou choisit des maps pour déterminer celles qui seront jouées.", en: "Phase where each team bans or picks maps to decide which ones will be played." },
+  { id: "checkin", term: "Check-in", aliases: ["check-in", "checkin"], fr: "Confirmation de présence avant un match. Une équipe absente au check-in perd généralement par forfait.", en: "Presence confirmation before a match. A team missing check-in usually loses by forfeit." },
+  { id: "round-robin", term: "Round robin", aliases: ["round robin", "poule"], fr: "Format où chaque équipe affronte toutes les autres ; un classement final départage les participants.", en: "Format where every team plays every other team; a final ranking decides the results." },
+  { id: "swiss", term: "Système suisse", aliases: ["swiss", "suisse"], fr: "Format où les équipes affrontent des adversaires au bilan similaire, sans élimination directe.", en: "Format where teams face opponents with a similar record, without direct elimination." },
+  { id: "single-elim", term: "Élimination simple", aliases: ["single elim", "elimination simple"], fr: "Format où une défaite élimine l'équipe du tournoi.", en: "Format where a single loss eliminates a team from the tournament." },
+  { id: "double-elim", term: "Double élimination", aliases: ["double elim", "double elimination"], fr: "Format où il faut deux défaites pour être éliminé : un arbre « winners » et un arbre « losers ».", en: "Format where it takes two losses to be eliminated: a winners bracket and a losers bracket." },
+  { id: "forfeit", term: "Forfait", aliases: ["forfait", "ff"], fr: "Abandon ou absence : l'équipe perd le match sans le jouer.", en: "Forfeit: a team loses the match without playing it." },
+  { id: "map-pool", term: "Map pool", aliases: ["map pool", "maps"], fr: "La liste des cartes officielles jouables en compétition sur un jeu.", en: "The list of official maps playable in competition for a game." },
+  { id: "rank", term: "Rang / Ladder", aliases: ["rank", "ladder", "elo", "rang"], fr: "Le niveau d'un joueur dans le classement du jeu (Iron → Radiant sur Valorant, par exemple).", en: "A player's level on the game's ladder (e.g. Iron → Radiant on Valorant)." },
+  { id: "captain", term: "Capitaine", aliases: ["captain", "capitaine", "capt."], fr: "Le joueur responsable de l'équipe : il gère le roster, les inscriptions et la communication.", en: "The player in charge of the team: roster, registrations and communication." },
+  { id: "coach", term: "Coach", aliases: ["coach"], fr: "L'encadrant qui prépare l'équipe : stratégie, analyse de matchs, suivi des joueurs.", en: "The staff member who prepares the team: strategy, match analysis, player follow-up." },
+  { id: "manager", term: "Manager", aliases: ["manager"], fr: "La personne qui gère l'administratif de l'équipe : inscriptions, partenaires, planning.", en: "The person handling the team's admin: registrations, partners, scheduling." },
+  { id: "starter", term: "Titulaire", aliases: ["titulaire", "starter"], fr: "Un joueur qui fait partie de la composition de départ.", en: "A player who is part of the starting line-up." },
+  { id: "substitute", term: "Remplaçant", aliases: ["remplacant", "remplaçant", "substitute", "sub"], fr: "Un joueur prêt à entrer en jeu en cas d'absence d'un titulaire.", en: "A player ready to step in if a starter is missing." },
+  { id: "tryout", term: "Tryout / Essai", aliases: ["tryout", "essai", "test"], fr: "Période d'essai pendant laquelle un joueur et une équipe se testent avant de s'engager.", en: "Trial period during which a player and a team test each other before committing." },
+  { id: "no-show", term: "No-show", aliases: ["no-show", "no show"], fr: "Une équipe ou un joueur qui ne se présente pas à un match programmé.", en: "A team or player who doesn't show up to a scheduled match." },
+  { id: "prize-pool", term: "Prize pool", aliases: ["prize pool", "dotation", "cashprize"], fr: "La dotation totale d'un tournoi, répartie entre les meilleures équipes.", en: "The total prize money of a tournament, split among the top teams." },
+  { id: "gg", term: "GG", aliases: ["gg"], fr: "« Good Game » : marque de fair-play échangée en fin de partie.", en: "\"Good Game\": a fair-play salute exchanged at the end of a match." },
+  { id: "lan", term: "LAN", aliases: ["lan"], fr: "« Local Area Network » : événement où les joueurs sont réunis physiquement dans un même lieu.", en: "\"Local Area Network\": an event where players gather physically in one venue." },
+  { id: "mix", term: "Mix", aliases: ["mix"], fr: "Une équipe constituée ponctuellement de joueurs qui ne jouent pas habituellement ensemble.", en: "A one-off team of players who don't usually play together." },
+  { id: "meta", term: "Méta", aliases: ["meta", "méta"], fr: "L'état courant du jeu : les stratégies, personnages et armes considérés comme les plus efficaces.", en: "The current state of the game: the strategies, characters and weapons considered most effective." },
+  { id: "caster", term: "Caster / Commentateur", aliases: ["caster", "commentateur"], fr: "La personne qui commente les matchs en direct pour le public.", en: "The person commentating matches live for the audience." },
+  { id: "orga", term: "Organisateur", aliases: ["orga", "organisateur", "organizer"], fr: "La structure (association, école, salle LAN…) qui organise des tournois et événements.", en: "The structure (association, school, LAN venue…) that organises tournaments and events." },
+  { id: "lfg", term: "LFG", aliases: ["lfg", "looking for group"], fr: "« Looking For Group » : recherche de coéquipiers pour une partie.", en: "\"Looking For Group\": looking for teammates for a game." },
+  { id: "ace", term: "Ace", aliases: ["ace"], fr: "Un joueur élimine à lui seul toute l'équipe adverse en un round.", en: "A player single-handedly eliminates the entire opposing team in one round." },
+  { id: "clutch", term: "Clutch", aliases: ["clutch"], fr: "Gagner une manche dans une situation très défavorable (ex. 1 contre 4).", en: "Winning a round from a very unfavourable situation (e.g. 1v4)." },
+  { id: "ot", term: "Overtime / OT", aliases: ["overtime", "ot"], fr: "Prolongation jouée lorsqu'il y a égalité à la fin du temps réglementaire.", en: "Extra time played when the score is tied at the end of regulation." },
+];
+
+export const findTerm = (word) => {
+  const w = String(word).toLowerCase();
+  return GLOSSARY.find((g) => g.term.toLowerCase() === w || (g.aliases || []).some((a) => a.toLowerCase() === w));
+};

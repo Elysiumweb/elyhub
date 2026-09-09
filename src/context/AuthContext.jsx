@@ -20,9 +20,18 @@ export function AuthProvider({ children }) {
     return onSnapshot(doc(db, "users", user.uid), (s) => { setProfile(s.exists() ? withId(s) : null); setProfileLoading(false); });
   }, [user]);
 
+  // Autorisation par rôle (firestore.rules) : `role` sur users/{uid} = admin | moderator.
+  // ADMIN_UID (variable d'env) sert uniquement de bootstrap au premier admin.
+  const role = profile?.role || null;
+  const isAdmin = role === "admin" || (!role && Boolean(ADMIN_UID) && user?.uid === ADMIN_UID);
+  const isModerator = isAdmin || role === "moderator";
+
   const value = {
-    user, profile, loading: user === undefined || (user && profileLoading),
-    isAdmin: user?.uid === ADMIN_UID,
+    user,
+    profile,
+    loading: user === undefined || (user && profileLoading),
+    isAdmin,
+    isModerator,
     logout: () => signOut(auth),
   };
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;

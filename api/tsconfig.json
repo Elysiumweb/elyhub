@@ -1,0 +1,19 @@
+{
+  // tsconfig dédié aux fonctions API (api/*.ts) : la vérification TS de Vercel ne
+  // reprend pas le tsconfig racine de CRA (include: ["src"]). Sans ce fichier,
+  // tsc traite les fonctions en CommonJS sans JSX et refuse les imports ESM.
+  // ⚠️ Compatible TypeScript 4.9 (celui embarqué par react-scripts, utilisé par
+  // la vérification Vercel) : pas de "moduleResolution": "bundler" (TS 5+).
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "lib": ["ES2020", "DOM"],
+    "skipLibCheck": true,
+    "noEmit": true,
+    "strict": false,
+    "jsx": "react-jsx",
+    "types": []
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

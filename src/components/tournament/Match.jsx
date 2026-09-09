@@ -19,7 +19,7 @@ const TeamRow = ({ team, score, winner, testId }) => (
   </div>
 );
 
-export const MatchCard = ({ match: m, tournament, compact = false, onOpen }) => (
+export const MatchCard = ({ match: m, compact = false, onOpen }) => (
   <button type="button" data-testid={`match-card-${m.id}`} onClick={() => onOpen(m)} className={`card-elysium hoverable w-full text-left ${compact ? "w-56" : ""} ${m.status === "disputed" ? "border-red-500/50" : m.status === "ready" ? "border-[#D8CA82]/40" : ""}`}>
     <div className="flex items-center justify-between px-2 pt-1.5"><span className="text-[10px] uppercase tracking-wider text-zinc-500">R{m.round} · M{m.index + 1}{m.isBye && " · BYE"}</span><StatusBadge status={m.status} testId={`match-status-${m.id}`} /></div>
     <TeamRow team={m.teamA} score={m.scoreA} winner={m.winnerId && m.winnerId === m.teamA?.id} testId={`match-${m.id}-teamA`} />
@@ -36,7 +36,7 @@ export const MatchDialog = ({ match: m, tournament, onClose }) => {
   const isOrg = user?.uid === tournament.organizerId;
   const myTeam = [m.teamA, m.teamB].find((x) => x && x.ownerId === user?.uid);
   const canAct = m.teamA && m.teamB && m.status !== "done";
-  const run = async (fn, msg) => { setBusy(true); try { await fn(); msg && toast.success(msg); } catch (e) { console.error(e); toast.error(t("err_generic")); } finally { setBusy(false); } };
+  const run = async (fn, msg) => { setBusy(true); try { await fn(); msg && toast.success(msg); } catch { toast.error(t("err_generic")); } finally { setBusy(false); } };
   const openChat = () => run(async () => { const cid = m.conversationId || (await createMatchConversation(m, tournament, profile)); window.location.assign(`/messages/${cid}`); });
 
   return (

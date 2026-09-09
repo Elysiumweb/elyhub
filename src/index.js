@@ -29,3 +29,13 @@ try {
 window.addEventListener("error", (event) => {
   if (!mounted || !container.hasChildNodes()) renderFatal(event.error || event.message);
 });
+
+// PWA : enregistrement du service worker uniquement en production (le dev server
+// ne sert pas /sw.js, et le cache gênerait le hot reload).
+if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      /* hors-ligne indisponible — non bloquant */
+    });
+  });
+}

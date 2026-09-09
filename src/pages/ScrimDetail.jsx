@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { where } from "firebase/firestore";
 import { Calendar, MapPin, Swords, MessageSquare, RefreshCw, Check, X, Flag } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { findOrCreateConversation, relaunchScrim, updateScrim, getTeam } from "@
 import { Avatar } from "@/components/common/Cards";
 import { GameBadge, OfficialBadge, StatusBadge } from "@/components/common/Badges";
 import { Skeletons } from "@/components/common/States";
+import Seo from "@/components/common/Seo";
 import NotFound from "./NotFound";
 
 const STEPS = ["open", "proposed", "accepted", "played"];
@@ -20,7 +21,6 @@ export default function ScrimDetail() {
   const { user, profile } = useAuth();
   const { t, formatDate } = useI18n();
   const { getGame } = useGames();
-  const nav = useNavigate();
   const { data: s, loading } = useDocument("scrims", id);
   const myTeams = useCollection("teams", [where("ownerId", "==", user?.uid || "-")], [user?.uid], !!user);
   const [pick, setPick] = useState("");
@@ -37,7 +37,7 @@ export default function ScrimDetail() {
   const iCancelled = s.cancelledBy === user?.uid;
   const showRelaunch = s.status === "cancelled" && involved && !iCancelled && !s.relaunched;
 
-  const run = async (fn, msg) => { setBusy(true); try { await fn(); msg && toast.success(msg); } catch (e) { console.error(e); toast.error(t("err_generic")); } finally { setBusy(false); } };
+  const run = async (fn, msg) => { setBusy(true); try { await fn(); msg && toast.success(msg); } catch { toast.error(t("err_generic")); } finally { setBusy(false); } };
 
   const propose = () => run(async () => {
     const team = candidates.find((x) => x.id === (pick || candidates[0]?.id));
@@ -52,6 +52,7 @@ export default function ScrimDetail() {
 
   return (
     <div className="max-w-4xl space-y-6" data-testid="scrim-detail-page">
+      <Seo title={`Scrim ${g.name} — ${s.teamName} | ElyHub`} description={s.notes || `${s.teamName} · scrim ${g.name}`} path={`/scrims/${s.id}`} />
       {s.status === "cancelled" && s.relaunched && <div data-testid="scrim-relaunched-banner" className="border border-[#D8CA82]/50 bg-[#D8CA82]/10 p-3 text-sm text-[#D8CA82] flex items-center gap-2"><RefreshCw className="h-4 w-4" />{t("scrim_relaunched_banner")}</div>}
       {s.relaunchedFrom && <div data-testid="scrim-relaunched-from-banner" className="border border-white/10 bg-[#161616] p-3 text-xs text-zinc-400 flex items-center gap-2"><RefreshCw className="h-3.5 w-3.5 text-[#D8CA82]" />{t("scrim_relaunched_from")} <Link className="text-[#D8CA82] hover:underline" to={`/scrims/${s.relaunchedFrom}`}>#{s.relaunchedFrom.slice(0, 6)}</Link></div>}
       {showRelaunch && (
@@ -80,7 +81,7 @@ export default function ScrimDetail() {
         <div className="mt-1 grid grid-cols-4 text-[10px] uppercase tracking-wider text-zinc-500">{STEPS.map((st) => <span key={st}>{t(`status_${st}`)}</span>)}</div>
 
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
-          {[[t("game"), <GameBadge game={g} />], [t("date_time"), <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDate(s.date, true)}</span>], [t("region"), <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{s.region}</span>], [t("rank_wanted"), s.rank || t("all_ranks")], [t("format"), s.format]].map(([k, v], i) => (
+          {[[t("game"), <GameBadge key="game" game={g} />], [t("date_time"), <span key="date_time" className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDate(s.date, true)}</span>], [t("region"), <span key="region" className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{s.region}</span>], [t("rank_wanted"), s.rank || t("all_ranks")], [t("format"), s.format]].map(([k, v], i) => (
             <div key={i} className="bg-[#111111] border border-white/10 p-3"><div className="label mb-1">{k}</div><div className="text-white">{v}</div></div>
           ))}
         </div>

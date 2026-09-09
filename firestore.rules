@@ -1,0 +1,210 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────
+    function signedIn() { return request.auth != null; }
+    function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+
+    function getUser(uid) { return get(/databases/$(database)/documents/users/$(uid)).data; }
+    function isAdmin() { return signedIn() && getUser(request.auth.uid).role == 'admin'; }
+    function isMod() { return signedIn() && getUser(request.auth.uid).role in ['admin', 'moderator']; }
+
+    function ownsResource() { return signedIn() && resource.data.ownerId == request.auth.uid; }
+    function ownsAfter() { return signedIn() && request.resource.data.ownerId == request.auth.uid; }
+    function isOrganizer() { return signedIn() && resource.data.organizerId == request.auth.uid; }
+    function isParticipant() {
+      return signedIn() && request.auth.uid in resource.data.participantIds;
+    }
+    function isParticipantAfter() {
+      return signedIn() && request.auth.uid in request.resource.data.participantIds;
+    }
+
+    function isMember(teamId) {
+      return signedIn() && request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.memberIds;
+    }
+    function isOwnerOfTeam(teamId) {
+      return signedIn() && get(/databases/$(database)/documents/teams/$(teamId)).data.ownerId == request.auth.uid;
+    }
+
+    // Taille de document plafonnée (les images doivent aller dans Storage, pas en base64)
+    function docIsSmall() {
+      return request.resource.data.keys().size() <= 60;
+    }
+
+    function noEscalation(roleKey) {
+      return !(roleKey in request.resource.data) || request.resource.data[roleKey] == resource.data[roleKey];
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Utilisateurs : document privé. Données publiques dans `profiles`.
+    // ─────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow get: if isSelf(uid) || isMod();
+      allow create: if isSelf(uid) && request.resource.data.onboarded is bool;
+      allow update: if isSelf(uid) && noEscalation('role') && docIsSmall();
+      allow delete: if isSelf(uid) || isAdmin();
+    }
+
+    // Projection publique légère (annuaire) — écrite par l'utilisateur lui-même.
+    match /profiles/{uid} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSelf(uid);
+      allow update: if isSelf(uid) && noEscalation('role');
+      allow delete: if isSelf(uid) || isMod();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Contenu public
+    // ─────────────────────────────────────────────────────────────
+    match /games/{id} {
+      allow get, list: if true;
+      allow create: if signedIn();
+      allow update, delete: if isMod();
+    }
+
+    match /teams/{id} {
+      allow get, list: if true;
+      allow create: if signedIn() && ownsAfter() && request.resource.data.memberIds.size() <= 30;
+      allow update: if ownsResource() || isMember(id);
+      allow delete: if ownsResource() || isMod();
+    }
+
+    match /offers/{id} {
+      allow get, list: if true;
+      allow create: if signedIn() && ownsAfter() && isOwnerOfTeam(request.resource.data.teamId);
+      allow update: if ownsResource();
+      allow delete: if ownsResource() || isMod();
+    }
+
+    match /scrims/{id} {
+      allow get, list: if true;
+      allow create: if signedIn() && request.resource.data.ownerIds.size() <= 2 && request.auth.uid in request.resource.data.ownerIds;
+      allow update: if signedIn() && (request.auth.uid in resource.data.ownerIds || request.auth.uid in request.resource.data.ownerIds);
+      allow delete: if signedIn() && request.auth.uid in resource.data.ownerIds || isMod();
+    }
+
+    match /tournaments/{id} {
+      allow get, list: if true;
+      allow create: if signedIn() && request.resource.data.organizerId == request.auth.uid;
+      allow update: if isOrganizer() || isMod();
+      allow delete: if isOrganizer() || isMod();
+    }
+
+    match /matches/{id} {
+      allow get, list: if true;
+      allow create: if isMod();
+      allow update: if signedIn() &&
+        (get(/databases/$(database)/documents/tournaments/$(resource.data.tournamentId)).data.organizerId == request.auth.uid
+         || (resource.data.teamA != null && resource.data.teamA.ownerId == request.auth.uid)
+         || (resource.data.teamB != null && resource.data.teamB.ownerId == request.auth.uid));
+      allow delete: if isMod();
+    }
+
+    match /lft/{id} {
+      allow get, list: if true;
+      allow create: if signedIn() && request.resource.data.playerId == request.auth.uid;
+      allow update: if signedIn() && resource.data.playerId == request.auth.uid;
+      allow delete: if signedIn() && resource.data.playerId == request.auth.uid || isMod();
+    }
+
+    match /news/{id} {
+      allow get, list: if true;
+      allow create, update, delete: if isMod();
+    }
+
+    match /events/{id} {
+      allow get, list: if true;
+      allow create: if signedIn();
+      allow update: if ownsResource() || isMod();
+      allow delete: if ownsResource() || isMod();
+    }
+
+    match /activity/{id} {
+      allow get, list: if true;
+      allow create: if signedIn();
+    }
+
+    match /comments/{id} {
+      allow get, list: if true;
+      allow create: if signedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update: if signedIn() && resource.data.authorId == request.auth.uid;
+      allow delete: if signedIn() && resource.data.authorId == request.auth.uid || isMod();
+    }
+
+    match /reviews/{id} {
+      allow get, list: if true;
+      allow create: if signedIn() && request.resource.data.authorId == request.auth.uid;
+      allow delete: if isMod();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Candidatures
+    // ─────────────────────────────────────────────────────────────
+    match /applications/{id} {
+      allow get: if signedIn() && (resource.data.playerId == request.auth.uid || resource.data.ownerId == request.auth.uid) || isMod();
+      allow list: if signedIn() && (request.query.limit <= 100);
+      allow create: if signedIn() && request.resource.data.playerId == request.auth.uid;
+      allow update: if signedIn() && (resource.data.playerId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+      allow delete: if isMod();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Messagerie (privée)
+    // ─────────────────────────────────────────────────────────────
+    match /conversations/{id} {
+      allow get, list: if isParticipant();
+      allow create: if signedIn() && isParticipantAfter() && request.resource.data.participantIds.size() <= 10;
+      allow update: if isParticipant();
+      allow delete: if isParticipant() || isMod();
+    }
+
+    match /conversations/{convId}/messages/{msgId} {
+      allow get, list: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds;
+      allow create: if signedIn() && request.resource.data.senderId == request.auth.uid;
+      allow update: if signedIn() && resource.data.senderId == request.auth.uid; // accusé de lecture
+      allow delete: if signedIn() && resource.data.senderId == request.auth.uid || isMod();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Signalements, modération, audit
+    // ─────────────────────────────────────────────────────────────
+    match /reports/{id} {
+      allow get, list: if isMod();
+      allow create: if signedIn() && request.resource.data.reportedBy == request.auth.uid;
+      allow update: if isMod();
+      allow delete: if isMod();
+    }
+
+    match /modlog/{id} {
+      allow get, list: if isMod();
+      allow create: if isMod() && request.resource.data.by == request.auth.uid;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Notifications & alertes (par utilisateur)
+    // ─────────────────────────────────────────────────────────────
+    match /notifications/{id} {
+      allow get, list: if isSelf(resource.data.recipientId);
+      allow create: if signedIn() && request.resource.data.recipientId == request.auth.uid || isMod();
+      allow update: if isSelf(resource.data.recipientId);
+      allow delete: if isSelf(resource.data.recipientId);
+    }
+
+    match /alerts/{id} {
+      allow get, list: if isSelf(resource.data.userId);
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSelf(resource.data.userId);
+    }
+
+    match /invites/{id} {
+      allow get, list: if signedIn() && (resource.data.inviteeId == request.auth.uid || isMember(resource.data.teamId));
+      allow create: if signedIn() && isOwnerOfTeam(request.resource.data.teamId);
+      allow update: if signedIn() && (resource.data.inviteeId == request.auth.uid || isMember(resource.data.teamId));
+      allow delete: if signedIn() && isOwnerOfTeam(resource.data.teamId);
+    }
+  }
+}

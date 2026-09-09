@@ -26,7 +26,7 @@ export const ProfileForm = ({ initial, onSaved, submitLabel }) => {
     try {
       await saveProfile(user.uid, { ...f, pseudo: f.pseudo.trim(), roles: f.roles.split(",").map((s) => s.trim()).filter(Boolean), email: user.email, onboarded: true, createdAt: initial?.createdAt || Date.now() });
       toast.success(t("profile_saved")); onSaved?.();
-    } catch (err) { console.error(err); toast.error(t("err_generic")); } finally { setBusy(false); }
+    } catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };
 
   return (

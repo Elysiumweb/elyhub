@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
 import { useDocument, useCollection } from "@/hooks/useFirestore";
 import { useGames } from "@/hooks/useGames";
+import Seo, { ldJobPosting } from "@/components/common/Seo";
 import { applyToOffer, createOffer, updateOffer } from "@/lib/db";
 import { REGIONS } from "@/lib/constants";
 import { Field, PageTitle, Skeletons } from "@/components/common/States";
@@ -31,7 +32,7 @@ export function OfferCreate() {
       if (!team || team.ownerId !== user.uid) throw new Error("forbidden");
       const ref = await createOffer({ ...f, role: f.role.trim() }, team, user.uid);
       toast.success(t("offer_created")); nav(`/offers/${ref.id}`);
-    } catch (err) { console.error(err); toast.error(t("err_generic")); } finally { setBusy(false); }
+    } catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };
   const g = team ? getGame(team.gameId) : null;
   return (
@@ -73,12 +74,13 @@ export default function OfferDetail() {
     if (!profile) return nav("/login");
     setBusy(true);
     try { await applyToOffer(offer, profile, msg.trim()); toast.success(t("application_sent")); setMsg(""); }
-    catch (e) { console.error(e); toast.error(t("err_generic")); } finally { setBusy(false); }
+    catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };
   const close = async () => { await updateOffer(offer.id, { status: offer.status === "open" ? "closed" : "open" }); toast.success(t("saved")); };
 
   return (
     <div className="max-w-3xl space-y-6" data-testid="offer-detail-page">
+      <Seo title={`${offer.role} — ${offer.teamName} | ElyHub`} description={offer.description || `${offer.role} · ${offer.teamName}`} path={`/offers/${offer.id}`} jsonLd={ldJobPosting(offer)} />
       <div className={`card-elysium p-6 sm:p-8 ${offer.isOfficial ? "card-official" : ""}`} style={{ borderLeftColor: g.color, borderLeftWidth: 3 }}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-4">
@@ -93,7 +95,7 @@ export default function OfferDetail() {
           <StatusBadge status={offer.status} />
         </div>
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-          {[[t("game"), <GameBadge game={g} />], [t("rank_min"), offer.rank || "—"], [t("region"), <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{offer.region}</span>], [t("availability"), <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{offer.availability || "—"}</span>]].map(([k, v], i) => (
+          {[[t("game"), <GameBadge key="game" game={g} />], [t("rank_min"), offer.rank || "—"], [t("region"), <span key="region" className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{offer.region}</span>], [t("availability"), <span key="availability" className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{offer.availability || "—"}</span>]].map(([k, v], i) => (
             <div key={i} className="bg-[#111111] border border-white/10 p-3"><div className="label mb-1">{k}</div><div className="text-white">{v}</div></div>
           ))}
         </div>

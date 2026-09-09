@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { auth, googleProvider } from "@/lib/firebase";
 import { useI18n } from "@/i18n";
 import { Field } from "@/components/common/States";
+import Seo from "@/components/common/Seo";
 
 const authError = (e, t) => {
   const map = { "auth/invalid-credential": "err_invalid_credentials", "auth/user-not-found": "err_invalid_credentials", "auth/wrong-password": "err_invalid_credentials",
@@ -42,6 +43,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-[#111111]">
+      <Seo title={t("login")} path="/login" noindex />
       <div className="hidden lg:flex relative flex-col justify-between p-12 border-r border-[#D8CA82]/20 overflow-hidden">
         <img src="/brand/pattern.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.07]" />
         <img src="/brand/accent-blade.png" alt="" className="absolute -right-20 -bottom-24 w-[560px] opacity-40 pointer-events-none" />
@@ -62,7 +64,7 @@ export default function Login() {
           </div>
           <h2 className="font-display text-xl uppercase text-white mb-6">{mode === "login" ? t("welcome_back") : t("create_account")}</h2>
           <form onSubmit={submit} className="space-y-4">
-            <Field label={t("email")} required><input data-testid="auth-email-input" type="email" required className="input-elysium" value={form.email} onChange={set("email")} placeholder="player@elysium.gg" /></Field>
+            <Field label={t("email")} required><input data-testid="auth-email-input" type="email" required className="input-elysium" value={form.email} onChange={set("email")} placeholder="player@elysium-esport.fr" /></Field>
             <Field label={t("password")} required><input data-testid="auth-password-input" type="password" required minLength={6} className="input-elysium" value={form.password} onChange={set("password")} placeholder="••••••••" /></Field>
             <button data-testid="auth-submit-button" disabled={busy} className="btn-gold w-full">{mode === "login" ? t("login") : t("register")}</button>
           </form>

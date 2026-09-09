@@ -67,7 +67,7 @@ export function LftCreate() {
     if (!f.gameId) return toast.error(t("err_game_required"));
     setBusy(true);
     try { await createLft({ ...f, roles: f.roles.split(",").map((s) => s.trim()).filter(Boolean) }, profile); toast.success(t("lft_published")); nav("/players?tab=lft"); }
-    catch (err) { console.error(err); toast.error(t("err_generic")); } finally { setBusy(false); }
+    catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };
   return (
     <div className="max-w-3xl">

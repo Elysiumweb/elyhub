@@ -25,7 +25,7 @@ const Thread = ({ conv, me }) => {
   const send = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
-    try { await sendMessage(conv.id, me, text.trim()); setText(""); } catch (err) { console.error(err); toast.error(t("err_generic")); }
+    try { await sendMessage(conv.id, me, text.trim()); setText(""); } catch { toast.error(t("err_generic")); }
   };
   const report = async () => { await reportConversation(conv.id, me.id, "abuse"); toast.success(t("reported")); };
 

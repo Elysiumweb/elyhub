@@ -22,9 +22,9 @@ export default function TeamCreate() {
     if (!f.gameId) return toast.error(t("err_game_required"));
     setBusy(true);
     try {
-      const ref = await createTeam({ ...f, name: f.name.trim(), members: [{ uid: user.uid, pseudo: profile.pseudo, avatar: profile.avatar || null, role: "Captain" }] }, user.uid);
+      const ref = await createTeam({ ...f, name: f.name.trim(), members: [{ uid: user.uid, pseudo: profile.pseudo, avatar: profile.avatar || null, role: "captain" }] }, user.uid);
       toast.success(t("team_created")); nav(`/teams/${ref.id}`);
-    } catch (err) { console.error(err); toast.error(t("err_generic")); } finally { setBusy(false); }
+    } catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };
 
   return (
