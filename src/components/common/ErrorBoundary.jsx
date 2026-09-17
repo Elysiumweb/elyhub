@@ -1,5 +1,8 @@
 import { Component } from "react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, RotateCw } from "lucide-react";
 import { isFirebaseConfigured, missingEnvVars } from "@/lib/firebase";
+import { useI18n } from "@/i18n";
 
 const isFr = () => {
   try {
@@ -75,6 +78,63 @@ export default class ErrorBoundary extends Component {
 
   render() {
     if (this.state.error) return <ErrorScreen error={this.state.error} />;
+    return this.props.children;
+  }
+}
+
+// État d'erreur « par page » : une exception pendant le rendu d'une route
+// n'empêche plus tout le site — l'utilisateur voit un message lisible (et non
+// un message minifié type « o is not a function »), peut réessayer ou revenir
+// à l'accueil, et la navigation reste fonctionnelle.
+function RouteErrorState({ error, onRetry }) {
+  const { t } = useI18n();
+  return (
+    <div className="card-elysium flex flex-col items-start gap-4 p-8 border-red-500/40 my-8" role="alert" data-testid="route-error-state">
+      <div className="h-10 w-10 grid place-items-center bg-red-500/10 border border-red-500/30">
+        <AlertTriangle className="h-5 w-5 text-red-400" />
+      </div>
+      <div>
+        <h2 className="font-display text-sm uppercase tracking-wider text-white">{t("page_crashed")}</h2>
+        <p className="mt-1 text-sm text-zinc-400 max-w-md">{t("page_crashed_desc")}</p>
+        {error?.message && (
+          <pre className="mt-3 border border-white/10 bg-black/40 p-2 text-[10px] text-red-300 whitespace-pre-wrap break-words font-mono">
+            {error.message}
+          </pre>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" data-testid="route-error-retry" onClick={onRetry} className="btn-gold text-xs">
+          <RotateCw className="h-4 w-4" />{t("retry")}
+        </button>
+        <Link to="/" className="btn-outline text-xs">{t("back_home")}</Link>
+      </div>
+    </div>
+  );
+}
+
+export class RouteErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  // Réinitialise l'erreur quand la route change (nouveau resetKey) :
+  // naviguer suffit à « réessayer » la page.
+  componentDidUpdate(prev) {
+    if (prev.resetKey !== this.props.resetKey && this.state.error) this.setState({ error: null });
+  }
+
+  componentDidCatch(error, info) {
+    // eslint-disable-next-line no-console
+    console.error("[ElyHub] Erreur de page", error, info?.componentStack);
+  }
+
+  render() {
+    if (this.state.error) return <RouteErrorState error={this.state.error} onRetry={() => this.setState({ error: null })} />;
     return this.props.children;
   }
 }

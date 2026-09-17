@@ -17,7 +17,8 @@ export default function CommandPalette() {
   const { getGame } = useGames();
 
   const teams = useCollection("teams", [limit(100)], []);
-  const players = useCollection("users", [limit(100)], []);
+  // Projets publics (users est privé — cf. firestore.rules)
+  const players = useCollection("profiles", [limit(100)], []);
   const tournaments = useCollection("tournaments", [limit(100)], []);
   const scrims = useCollection("scrims", [limit(100)], []);
   const offers = useCollection("offers", [limit(100)], []);
@@ -55,7 +56,7 @@ export default function CommandPalette() {
     if (!qq) return null;
     return {
       teams: localSearch(teams.data, qq, ["name"]).slice(0, 5),
-      players: localSearch(players.data.filter((p) => p.onboarded), qq, ["pseudo"]).slice(0, 5),
+      players: localSearch(players.data.filter((p) => p.onboarded && p.visibility?.hideDirectory !== false), qq, ["pseudo"]).slice(0, 5),
       tournaments: localSearch(tournaments.data, qq, ["name", "organizerName"]).slice(0, 5),
       scrims: localSearch(scrims.data, qq, ["teamName", "opponentTeamName"]).slice(0, 5),
       offers: localSearch(offers.data, qq, ["role", "teamName"]).slice(0, 5),

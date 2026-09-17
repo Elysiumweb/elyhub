@@ -29,7 +29,8 @@ export default function Teams() {
   const s = q.toLowerCase();
   const overrides = { gameId: urlGame || undefined };
   const teamList = rankOfficial(apply(teams.data, undefined, overrides)).filter((x) => !s || x.name.toLowerCase().includes(s));
-  const offerList = rankOfficial(apply(offers.data, undefined, overrides)).filter((o) => o.status === "open" && (!s || o.role.toLowerCase().includes(s) || o.teamName.toLowerCase().includes(s)));
+  // Tolérance aux documents incomplets (champs absents) : pas de crash au rendu.
+  const offerList = rankOfficial(apply(offers.data, undefined, overrides)).filter((o) => o.status === "open" && (!s || (o.role || "").toLowerCase().includes(s) || (o.teamName || "").toLowerCase().includes(s)));
   const loading = tab === "teams" ? teams.loading : offers.loading;
   const error = tab === "teams" ? teams.error : offers.error;
   const reload = tab === "teams" ? teams.reload : offers.reload;

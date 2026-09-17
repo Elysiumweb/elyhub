@@ -33,8 +33,9 @@ export const fr = {
   err_invalid_credentials: "Identifiants invalides", err_email_in_use: "Cet email est déjà utilisé", err_weak_password: "Mot de passe trop faible (6 caractères min.)",
   err_invalid_email: "Email invalide", err_popup_closed: "Fenêtre de connexion fermée", err_unauthorized_domain: "Domaine non autorisé dans Firebase Auth",
   err_generic: "Une erreur est survenue", reset_sent: "Email de réinitialisation envoyé",
-  err_pseudo_required: "Le pseudo est obligatoire", err_game_required: "Choisissez au moins un jeu",
+  err_pseudo_required: "Le pseudo est obligatoire", err_game_required: "Choisissez au moins un jeu", err_age_required: "Choisissez votre tranche d'âge (protection des mineurs).",
   error_loading: "Impossible de charger les données", error_loading_desc: "Une erreur de connexion ou de permissions empêche la lecture. Réessayez dans un instant.",
+  page_crashed: "Une erreur est survenue sur cette page", page_crashed_desc: "L'erreur a été isolée à cette page : rechargez-la ou revenez à l'accueil, le reste du site reste disponible.",
 
   // ── Connexion ──
   login_hero_1: "Recrute. Scrim.", login_hero_2: "Domine.", login_hero_desc: "ElyHub réunit joueurs, structures et organisateurs : recrutement, scrims et tournois au même endroit.",
@@ -43,7 +44,9 @@ export const fr = {
 
   // ── Onboarding / profil ──
   profile_saved: "Profil enregistré", pseudo: "Pseudo", region: "Région", avatar: "Avatar", your_games: "Vos jeux", roles: "Rôles", roles_hint: "Séparez par des virgules",
-  languages: "Langues", bio: "Bio", step_1: "Étape 1 / 1", onboarding_title: "Profil joueur",
+  languages: "Langues", bio: "Bio", step_1: "Étape 1 / 3", step_2: "Étape 2 / 3", step_3: "Étape 3 / 3",
+  onb_step_1: "Identité", onb_step_2: "Jeux & rangs", onb_step_3: "Disponibilités", onboarding_title: "Profil joueur",
+  next: "Suivant", optional: "Optionnel", no_schedule: "Aucune disponibilité renseignée",
   onboarding_desc: "Complétez votre profil pour candidater, rejoindre des équipes et participer aux scrims.", finish_onboarding: "Terminer", view_public_profile: "Profil public",
   your_rank: "Votre rang", rank_for_game: "Rang par jeu", rank_hint: "Votre rang actuel sur la ladder du jeu — utilisé pour les mises en relation et les filtres.",
   level: "Niveau", all_levels: "Tous niveaux", level_amateur: "Amateur", "level_semi-pro": "Semi-pro", level_pro: "Pro", level_hint: "Votre ambition : loisir, semi-compétitif ou professionnel.",
@@ -57,7 +60,11 @@ export const fr = {
   media_showcase: "Vitrine média", vod_link: "Lien VOD / clip / highlight", vod_hint: "Une URL vers votre meilleure action (YouTube, Twitch, Streamable…).",
 
   // ── Compte ──
+  acc_tab_profile: "Profil", acc_tab_security: "Sécurité", acc_tab_privacy: "Confidentialité", acc_tab_data: "Données",
   change_email: "Changer d'email", change_password: "Changer de mot de passe", new_email: "Nouvel email", new_password: "Nouveau mot de passe",
+  confirm_password: "Confirmer le mot de passe", password_mismatch: "Les mots de passe ne correspondent pas",
+  err_recent_login: "Session trop ancienne — reconnectez-vous puis réessayez.",
+  danger_zone: "Zone sensible",
   current_password: "Mot de passe actuel", email_updated: "Email mis à jour", password_updated: "Mot de passe mis à jour",
   export_data: "Exporter mes données", export_data_desc: "Téléchargez l'ensemble de vos données personnelles (RGPD — droit à la portabilité).", data_exported: "Export téléchargé",
   delete_account: "Supprimer mon compte", delete_account_desc: "Supprime définitivement votre compte et purge vos données (RGPD).", delete_account_confirm: "Vraiment supprimer votre compte ? Cette action est irréversible.",
@@ -126,6 +133,9 @@ export const fr = {
   tab_tournaments: "Tournois", tab_settings: "Réglages", add_palmares: "Ajouter au palmarès", title: "Titre", placement: "Classement", date: "Date",
   message: "Message", browse_tournaments: "Parcourir les tournois", no_tournaments_registered: "Aucun tournoi inscrit",
   no_tournaments_registered_desc: "Inscrivez votre équipe depuis la page d'un tournoi.", member_role: "Rôle", change_role: "Changer le rôle", role_updated: "Rôle mis à jour",
+  team_games: "Jeux de l'équipe", team_games_hint: "Plusieurs jeux possibles — le premier sélectionné est le jeu principal (annonces et filtres).",
+  team_deleted: "Équipe supprimée", team_archived: "Équipe archivée", team_restored: "Équipe restaurée",
+  time_from: "Début", time_to: "Fin", no_training: "Aucun planning d'entraînement renseigné.",
 
   // ── Joueurs ──
   players_title: "Joueurs", no_players: "Aucun joueur", no_players_desc: "Aucun joueur ne correspond à ces filtres.", member_since: "Membre depuis le",

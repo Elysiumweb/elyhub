@@ -60,6 +60,23 @@ function makeDevServerV5Compatible(devServerConfig) {
 }
 
 const webpackConfig = {
+  // Jest 27 (react-scripts 5) ne résout pas le champ `exports` des paquets
+  // react-router v7 → les tests qui importent react-router-dom échouaient avec
+  // « Cannot find module ». On pointe explicitement les builds CJS.
+  jest: {
+    configure: (jestConfig) => {
+      jestConfig.moduleNameMapper = {
+        ...jestConfig.moduleNameMapper,
+        // Alias @/ (déjà géré par webpack via `alias`) pour les tests.
+        "^@/(.*)$": path.join(__dirname, "src", "$1"),
+        // Chemins absolus : les sous-chemins ne sont pas exposés par `exports`.
+        "^react-router-dom$": path.join(__dirname, "node_modules", "react-router-dom", "dist", "index.js"),
+        "^react-router/dom$": path.join(__dirname, "node_modules", "react-router", "dist", "development", "dom-export.js"),
+        "^react-router$": path.join(__dirname, "node_modules", "react-router", "dist", "development", "index.js"),
+      };
+      return jestConfig;
+    },
+  },
   eslint: {
     configure: {
       extends: ["plugin:react-hooks/recommended"],

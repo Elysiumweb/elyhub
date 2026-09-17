@@ -11,6 +11,7 @@ import { I18nProvider } from "@/i18n";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/layout/Layout";
 import ConfigWarning from "@/components/common/ConfigWarning";
+import { RouteErrorBoundary } from "@/components/common/ErrorBoundary";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { Skeletons } from "@/components/common/States";
 import NotFound from "@/pages/NotFound";
@@ -77,6 +78,72 @@ const PublicOnly = () => {
   return user ? <Navigate to="/" replace /> : <Login />;
 };
 
+// Barrière d'erreur par route : un crash pendant le rendu d'une page affiche
+// un état récupérable (retry + accueil) au lieu de remplacer tout le site par
+// un message d'erreur minifié. `resetKey` = pathname → changer de page réinitialise.
+const Routed = () => {
+  const { pathname } = useLocation();
+  return (
+    <RouteErrorBoundary resetKey={pathname}>
+      <Routes>
+        <Route path="/login" element={<PublicOnly />} />
+        <Route path="/register" element={<PublicOnly />} />
+        <Route element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="/teams" element={<Teams />} />
+          <Route path="/teams/:id" element={<TeamDetail />} />
+          <Route path="/offers/:id" element={<OfferDetail />} />
+          <Route path="/players" element={<Players />} />
+          <Route path="/players/:id" element={<PlayerProfile />} />
+          <Route path="/scrims" element={<Scrims />} />
+          <Route path="/scrims/:id" element={<ScrimDetail />} />
+          <Route path="/tournaments" element={<Tournaments />} />
+          <Route path="/tournaments/:id" element={<TournamentDetail />} />
+          {/* Hubs par jeu (SEO) : /valorant, /valorant/equipes, /league-of-legends/tournois…
+             Route dynamique : les slugs inconnus retombent sur NotFound (GameHub). */}
+          <Route path="/:slug" element={<GameHub />} />
+          <Route path="/:slug/:section" element={<GameHub />} />
+          {/* Pages grand public */}
+          <Route path="/glossaire" element={<Glossary />} />
+          <Route path="/aide" element={<Help />} />
+          <Route path="/guides" element={<Guides />} />
+          <Route path="/esport" element={<Esport />} />
+          <Route path="/a-propos" element={<About />} />
+          <Route path="/actu" element={<News />} />
+          <Route path="/actu/:id" element={<NewsDetail />} />
+          <Route path="/carrieres" element={<Careers />} />
+          <Route path="/evenements" element={<Events />} />
+          <Route path="/ambassadeurs" element={<Ambassadors />} />
+          <Route path="/mentions-legales" element={<Legal kind="legal" />} />
+          <Route path="/cgu" element={<Legal kind="cgu" />} />
+          <Route path="/confidentialite" element={<Legal kind="privacy" />} />
+          <Route path="/cookies" element={<Legal kind="cookies" />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/presse" element={<Press />} />
+          <Route path="/partenaires" element={<Partners />} />
+          <Route element={<Protected />}>
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/dashboard" element={<TeamDashboard />} />
+            <Route path="/teams/new" element={<TeamCreate />} />
+            <Route path="/teams/:teamId/offers/new" element={<OfferCreate />} />
+            <Route path="/applications" element={<MyApplications />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/messages/:id" element={<Messages />} />
+            <Route path="/scrims/new" element={<ScrimCreate />} />
+            <Route path="/tournaments/new" element={<TournamentCreate />} />
+            <Route path="/lft/new" element={<LftCreate />} />
+          </Route>
+          <Route element={<Protected admin />}>
+            <Route path="/admin" element={<Admin />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </RouteErrorBoundary>
+  );
+};
+
 function App() {
   return (
     <I18nProvider>
@@ -89,62 +156,7 @@ function App() {
                   <BrowserRouter>
                     {!isFirebaseConfigured && <ConfigWarning />}
                     <Suspense fallback={<PageLoader />}>
-                      <Routes>
-                        <Route path="/login" element={<PublicOnly />} />
-                        <Route path="/register" element={<PublicOnly />} />
-                        <Route element={<Layout />}>
-                          <Route index element={<Home />} />
-                          <Route path="/teams" element={<Teams />} />
-                          <Route path="/teams/:id" element={<TeamDetail />} />
-                          <Route path="/offers/:id" element={<OfferDetail />} />
-                          <Route path="/players" element={<Players />} />
-                          <Route path="/players/:id" element={<PlayerProfile />} />
-                          <Route path="/scrims" element={<Scrims />} />
-                          <Route path="/scrims/:id" element={<ScrimDetail />} />
-                          <Route path="/tournaments" element={<Tournaments />} />
-                          <Route path="/tournaments/:id" element={<TournamentDetail />} />
-                          {/* Hubs par jeu (SEO) : /valorant, /valorant/equipes, /league-of-legends/tournois…
-                             Route dynamique : les slugs inconnus retombent sur NotFound (GameHub). */}
-                          <Route path="/:slug" element={<GameHub />} />
-                          <Route path="/:slug/:section" element={<GameHub />} />
-                          {/* Pages grand public */}
-                          <Route path="/glossaire" element={<Glossary />} />
-                          <Route path="/aide" element={<Help />} />
-                          <Route path="/guides" element={<Guides />} />
-                          <Route path="/esport" element={<Esport />} />
-                          <Route path="/a-propos" element={<About />} />
-                          <Route path="/actu" element={<News />} />
-                          <Route path="/actu/:id" element={<NewsDetail />} />
-                          <Route path="/carrieres" element={<Careers />} />
-                          <Route path="/evenements" element={<Events />} />
-                          <Route path="/ambassadeurs" element={<Ambassadors />} />
-                          {/* Pages légales & institutionnelles */}
-                          <Route path="/mentions-legales" element={<Legal kind="legal" />} />
-                          <Route path="/cgu" element={<Legal kind="cgu" />} />
-                          <Route path="/confidentialite" element={<Legal kind="privacy" />} />
-                          <Route path="/cookies" element={<Legal kind="cookies" />} />
-                          <Route path="/contact" element={<Contact />} />
-                          <Route path="/presse" element={<Press />} />
-                          <Route path="/partenaires" element={<Partners />} />
-                          <Route element={<Protected />}>
-                            <Route path="/onboarding" element={<Onboarding />} />
-                            <Route path="/account" element={<Account />} />
-                            <Route path="/dashboard" element={<TeamDashboard />} />
-                            <Route path="/teams/new" element={<TeamCreate />} />
-                            <Route path="/teams/:teamId/offers/new" element={<OfferCreate />} />
-                            <Route path="/applications" element={<MyApplications />} />
-                            <Route path="/messages" element={<Messages />} />
-                            <Route path="/messages/:id" element={<Messages />} />
-                            <Route path="/scrims/new" element={<ScrimCreate />} />
-                            <Route path="/tournaments/new" element={<TournamentCreate />} />
-                            <Route path="/lft/new" element={<LftCreate />} />
-                          </Route>
-                          <Route element={<Protected admin />}>
-                            <Route path="/admin" element={<Admin />} />
-                          </Route>
-                          <Route path="*" element={<NotFound />} />
-                        </Route>
-                      </Routes>
+                      <Routed />
                     </Suspense>
                   </BrowserRouter>
                   <Toaster

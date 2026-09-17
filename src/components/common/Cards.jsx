@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import { Users, MapPin, Calendar, Trophy, Swords, Briefcase } from "lucide-react";
+import { Users, MapPin, Calendar, Trophy, Swords, Briefcase, BadgeCheck } from "lucide-react";
 import { useGames } from "@/hooks/useGames";
 import { useI18n } from "@/i18n";
 import { GameBadge, OfficialBadge, StatusBadge } from "./Badges";
 import { cn } from "@/lib/utils";
+import { isVerified } from "@/lib/profile";
+import { countryLabel } from "@/lib/constants";
 
 export const Avatar = ({ src, name, size = "h-10 w-10", round = false, className }) => (
   <div className={cn(size, "shrink-0 overflow-hidden border border-white/10 bg-[#1A1A1A] grid place-items-center font-display text-xs text-[#D8CA82]", round ? "rounded-full" : "rounded-sm", className)}>
@@ -133,13 +135,17 @@ export const TournamentCard = ({ tournament: tr }) => {
 
 export const PlayerCard = ({ player }) => {
   const { getGame } = useGames();
+  const country = player.country ? countryLabel(player.country) : null;
   return (
     <Link to={`/players/${player.id}`} data-testid={`player-card-${player.id}`} className="card-elysium p-4 flex items-center gap-3">
       <Avatar src={player.avatar} name={player.pseudo} round size="h-11 w-11" />
       <div className="min-w-0">
-        <h3 className="font-display text-sm uppercase tracking-wide text-white truncate">{player.pseudo}</h3>
+        <h3 className="font-display text-sm uppercase tracking-wide text-white flex items-center gap-1.5">
+          <span className="truncate">{player.pseudo}</span>
+          {isVerified(player) && <BadgeCheck data-testid={`player-verified-${player.id}`} className="h-3.5 w-3.5 text-emerald-400 shrink-0" />}
+        </h3>
         <div className="mt-1 flex flex-wrap gap-1.5 text-xs text-zinc-400">
-          <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{player.region}</span>
+          <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{player.region}{country && ` · ${country}`}</span>
           {(player.games || []).slice(0, 3).map((id) => <GameBadge key={id} game={getGame(id)} />)}
         </div>
       </div>

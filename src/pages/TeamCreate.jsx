@@ -13,15 +13,16 @@ export default function TeamCreate() {
   const { user, profile } = useAuth();
   const { t } = useI18n();
   const nav = useNavigate();
-  const [f, setF] = useState({ name: "", gameId: "", region: profile?.region || "EU", logo: null, description: "", languages: profile?.languages || ["fr"] });
+  const [f, setF] = useState({ name: "", gameIds: [], region: profile?.region || "EU", logo: null, description: "", languages: profile?.languages || ["fr"] });
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!f.gameId) return toast.error(t("err_game_required"));
+    if (!f.gameIds.length) return toast.error(t("err_game_required"));
     setBusy(true);
     try {
+      // jeu principal = premier jeu sélectionné ; createTeam normalise gameIds/gameId
       const ref = await createTeam({ ...f, name: f.name.trim(), members: [{ uid: user.uid, pseudo: profile.pseudo, avatar: profile.avatar || null, role: "captain" }] }, user.uid);
       toast.success(t("team_created")); nav(`/teams/${ref.id}`);
     } catch { toast.error(t("err_generic")); } finally { setBusy(false); }
@@ -35,7 +36,9 @@ export default function TeamCreate() {
           <Field label={t("team_name")} required><input data-testid="team-name-input" required maxLength={60} className="input-elysium" value={f.name} onChange={set("name")} /></Field>
           <Field label={t("region")} required><select data-testid="team-region-select" className="input-elysium" value={f.region} onChange={set("region")}>{REGIONS.map((r) => <option key={r}>{r}</option>)}</select></Field>
         </div>
-        <Field label={t("game")} required><GameSelector value={f.gameId} onChange={(v) => setF({ ...f, gameId: v })} testId="team-game-selector" /></Field>
+        <Field label={t("team_games")} hint={t("team_games_hint")} required>
+          <GameSelector multiple value={f.gameIds} onChange={(v) => setF({ ...f, gameIds: v })} testId="team-game-selector" />
+        </Field>
         <Field label={t("logo")}><ImageUpload value={f.logo} onChange={(v) => setF({ ...f, logo: v })} testId="team-logo-upload" /></Field>
         <Field label={t("languages")}>
           <div className="flex flex-wrap gap-2">

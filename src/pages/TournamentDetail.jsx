@@ -8,6 +8,7 @@ import { useI18n } from "@/i18n";
 import { useCollection, useDocument } from "@/hooks/useFirestore";
 import { useGames } from "@/hooks/useGames";
 import { registerTeamToTournament, startTournament, addMatches, finishTournament } from "@/lib/db";
+import { teamGames } from "@/lib/profile";
 import { generateSingleElim, generateRoundRobin, generateSwissRound, shuffle, standings } from "@/lib/bracket";
 import { Avatar } from "@/components/common/Cards";
 import { GameBadge, OfficialBadge, StatusBadge } from "@/components/common/Badges";
@@ -40,7 +41,8 @@ export default function TournamentDetail() {
   const left = tr.slots - (tr.registeredTeamIds?.length || 0);
   const status = tr.status === "finished" ? "finished" : tr.status === "ongoing" ? "ongoing" : left <= 0 ? "full" : "registration";
   const isOrg = user?.uid === tr.organizerId;
-  const eligible = myTeams.data.filter((x) => x.gameId === tr.gameId && !tr.registeredTeamIds?.includes(x.id));
+  // Équipes multi-jeux : éligible si le jeu du tournoi fait partie de ses jeux.
+  const eligible = myTeams.data.filter((x) => teamGames(x).includes(tr.gameId) && !tr.registeredTeamIds?.includes(x.id));
   const alreadyIn = memberTeams.data.filter((x) => tr.registeredTeamIds?.includes(x.id));
   const hasAnyTeam = memberTeams.data.length > 0;
   const liveMatch = activeMatch ? matches.data.find((m) => m.id === activeMatch.id) || activeMatch : null;
