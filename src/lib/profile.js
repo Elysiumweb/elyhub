@@ -51,15 +51,18 @@ export const isVerified = (p) => {
 // L'UI édite un seul créneau horaire appliqué aux jours cochés ; le profil stocke
 // un tableau structuré [{ day, from, to }] (un élément par jour coché).
 export const buildSchedule = ({ days = [], from = "", to = "" } = {}) => {
-  if (!days.length || !from || !to) return [];
+  if (!Array.isArray(days) || !days.length || !from || !to) return [];
   return days.map((day) => ({ day, from, to }));
 };
 
 // Reconstitue l'état UI (days/from/to) à partir du tableau stocké.
+// Tolérance aux données legacy : un champ malformé (map au lieu de list,
+// chaîne…) ne doit jamais faire crasher le rendu (« o.map is not a function »).
 export const scheduleToForm = (schedule = []) => {
-  const first = schedule[0];
+  const list = Array.isArray(schedule) ? schedule : [];
+  const first = list[0];
   return {
-    days: schedule.map((s) => s.day).filter(Boolean),
+    days: list.map((s) => s?.day).filter(Boolean),
     from: first?.from || "",
     to: first?.to || "",
   };

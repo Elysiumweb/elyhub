@@ -5,16 +5,36 @@ import {
 import { db } from "./firebase";
 import { ADMIN_UID } from "./constants";
 import { applyMatchToElo, ELO_INITIAL } from "./elo";
-import { localToDate } from "./time";
+import { localToDate, toEpoch } from "./time";
 import { normalizeTeamGames, profileToPublic } from "./profile";
 
 export const now = () => Date.now();
-export const isOfficialUid = (uid) => Boolean(ADMIN_UID) && uid === ADMIN_UID;
+// Est « officiel » : le compte bootstrap (ADMIN_UID au build) OU tout compte
+// portant le rôle admin (champ role du document users/{uid}). Le rôle rend la
+// mise en avant indépendante de la variable d'environnement.
+export const isOfficialUid = (uid, role = null) => role === "admin" || (Boolean(ADMIN_UID) && uid === ADMIN_UID);
 export const withId = (snap) => ({ id: snap.id, ...snap.data() });
 
-// Sort: official first, then newest
+// Un contenu est « officiel » s'il porte le drapeau isOfficial OU s'il
+// appartient au compte administrateur (équipes, offres, scrims, tournois,
+// LFT, annonces, fiches joueur…). Le drapeau est posé à la création, mais
+// les contenus publiés avant la configuration d'ADMIN_UID ne l'ont pas :
+// on retombe donc sur l'uid propriétaire à l'affichage.
+export const isOfficialItem = (item) => {
+  if (!item) return false;
+  if (item.isOfficial === true) return true;
+  if (!ADMIN_UID) return false;
+  return [item.ownerId, item.createdBy, item.playerId, item.organizerId, item.authorId, item.id]
+    .filter(Boolean)
+    .includes(ADMIN_UID);
+};
+
+// Sort: official (compte administrateur) first, then newest.
+// toEpoch tolère les createdAt exotiques (Timestamp Firestore, ISO string…).
 export const rankOfficial = (list) =>
-  [...list].sort((a, b) => (b.isOfficial === true) - (a.isOfficial === true) || (b.createdAt || 0) - (a.createdAt || 0));
+  [...list].sort(
+    (a, b) => Number(isOfficialItem(b)) - Number(isOfficialItem(a)) || (toEpoch(b.createdAt) || 0) - (toEpoch(a.createdAt) || 0),
+  );
 
 // ─────────────────────────── Users ───────────────────────────
 export const getProfile = async (uid) => {
@@ -56,19 +76,20 @@ export const deleteAccount = async (uid) => {
 };
 
 // ─────────────────────────── Games ───────────────────────────
-export const createGame = (name, uid) =>
+export const createGame = (name, uid, role = null) =>
   addDoc(collection(db, "games"), {
-    name, status: isOfficialUid(uid) ? "validated" : "pending", createdBy: uid, createdAt: now(),
+    name, status: isOfficialUid(uid, role) ? "validated" : "pending", createdBy: uid, createdAt: now(),
   });
 export const setGameStatus = (id, status) => updateDoc(doc(db, "games", id), { status });
+export const deleteGame = (id) => deleteDoc(doc(db, "games", id));
 
 // ─────────────────────────── Teams ───────────────────────────
 // Équipes multi-jeux : `gameIds` = tous les jeux, `gameId` = jeu principal
 // (premier de la liste). Les données historiques n'ont que `gameId` —
 // `teamGames()` (lib/profile) lit les deux formes.
-export const createTeam = (data, uid) =>
+export const createTeam = (data, uid, role = null) =>
   addDoc(collection(db, "teams"), {
-    ...normalizeTeamGames(data), ownerId: uid, memberIds: [uid], isOfficial: isOfficialUid(uid),
+    ...normalizeTeamGames(data), ownerId: uid, memberIds: [uid], isOfficial: isOfficialUid(uid, role),
     acceptMessages: true, palmares: [], createdAt: now(), status: "active", elo: ELO_INITIAL, eloGames: 0, rosterLog: [],
   });
 // Le patch doit transmettre `gameIds` (et donc `gameId` primaire) en bloc pour
@@ -259,10 +280,10 @@ export const reportNoShow = async (scrim, byUid, targetTeamId) => {
 };
 
 // ─────────────────────────── Tournaments ───────────────────────────
-export const createTournament = (data, uid, organizerTeam) =>
+export const createTournament = (data, uid, organizerTeam, role = null) =>
   addDoc(collection(db, "tournaments"), {
     ...data, organizerId: uid, organizerTeamId: organizerTeam?.id || null, organizerName: organizerTeam?.name || null,
-    isOfficial: isOfficialUid(uid), status: "registration", rounds: 0, registeredTeamIds: [], registeredTeams: [], createdAt: now(),
+    isOfficial: isOfficialUid(uid, role), status: "registration", rounds: 0, registeredTeamIds: [], registeredTeams: [], createdAt: now(),
   });
 export const updateTournament = (id, data) => updateDoc(doc(db, "tournaments", id), { ...data, updatedAt: now() });
 export const deleteTournament = (id) => deleteDoc(doc(db, "tournaments", id));
@@ -394,7 +415,7 @@ export const createMatchConversation = async (match, tournament, _me) => {
 export const createLft = (data, profile) =>
   addDoc(collection(db, "lft"), {
     ...data, playerId: profile.id, playerPseudo: profile.pseudo, playerAvatar: profile.avatar || null, languages: profile.languages || [],
-    status: "open", isOfficial: isOfficialUid(profile.id), createdAt: now(),
+    status: "open", isOfficial: isOfficialUid(profile.id, profile?.role), createdAt: now(),
   });
 export const updateLft = (id, data) => updateDoc(doc(db, "lft", id), data);
 export const deleteLft = (id) => deleteDoc(doc(db, "lft", id));
@@ -444,6 +465,7 @@ export const reportContent = ({ targetType, targetId, targetLabel, reason, byUid
   });
 export const resolveReport = (id, resolution) =>
   updateDoc(doc(db, "reports", id), { status: resolution, resolvedAt: now() });
+export const deleteReport = (id) => deleteDoc(doc(db, "reports", id));
 export const logModAction = (byUid, action, targetType, targetId) =>
   addDoc(collection(db, "modlog"), { by: byUid, action, targetType, targetId, at: now() });
 export const deleteContentByRef = async (targetType, targetId) => {
@@ -453,8 +475,8 @@ export const deleteContentByRef = async (targetType, targetId) => {
 };
 
 // ─────────────────────────── Actualités / blog ───────────────────────────
-export const createNews = (data, uid) =>
-  addDoc(collection(db, "news"), { ...data, authorId: uid, status: "published", publishedAt: now(), createdAt: now() });
+export const createNews = (data, uid, role = null) =>
+  addDoc(collection(db, "news"), { ...data, authorId: uid, isOfficial: isOfficialUid(uid, role), status: "published", publishedAt: now(), createdAt: now() });
 export const updateNews = (id, data) => updateDoc(doc(db, "news", id), { ...data, updatedAt: now() });
 export const deleteNews = (id) => deleteDoc(doc(db, "news", id));
 

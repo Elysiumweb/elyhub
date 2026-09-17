@@ -23,7 +23,7 @@ export default function TeamCreate() {
     setBusy(true);
     try {
       // jeu principal = premier jeu sélectionné ; createTeam normalise gameIds/gameId
-      const ref = await createTeam({ ...f, name: f.name.trim(), members: [{ uid: user.uid, pseudo: profile.pseudo, avatar: profile.avatar || null, role: "captain" }] }, user.uid);
+      const ref = await createTeam({ ...f, name: f.name.trim(), members: [{ uid: user.uid, pseudo: profile.pseudo, avatar: profile.avatar || null, role: "captain" }] }, user.uid, profile?.role);
       toast.success(t("team_created")); nav(`/teams/${ref.id}`);
     } catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };

@@ -33,12 +33,14 @@ export function Players() {
   const { data, loading, error, reload } = useCollection("profiles");
   const lft = useCollection("lft");
   const gameId = urlGame || filters.gameId;
-  const list = apply(data.filter((p) => p.onboarded
+  // Annuaire trié « officiel d'abord » : la fiche du compte administrateur
+  // (et de tout contenu officiel) remonte tout en haut.
+  const list = rankOfficial(apply(data.filter((p) => p.onboarded
       && p.visibility?.public !== false
       && p.visibility?.hideDirectory !== false
-      && (!q || p.pseudo?.toLowerCase().includes(q.toLowerCase()))
+      && (!q || (p.pseudo || "").toLowerCase().includes(q.toLowerCase()))
       && (!level || p.level === level)), { gameKey: "__none__" })
-    .filter((p) => !gameId || (p.games || []).includes(gameId));
+    .filter((p) => !gameId || (p.games || []).includes(gameId)));
   const lftList = rankOfficial(apply(lft.data, undefined, { gameId: urlGame || undefined })).filter((x) => x.status === "open" && (!q || x.playerPseudo?.toLowerCase().includes(q.toLowerCase())));
   return (
     <div>

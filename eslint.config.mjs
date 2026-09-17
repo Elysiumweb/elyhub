@@ -33,4 +33,9 @@ export default [
       "no-console": "warn",
     },
   },
+  {
+    // Les tests et mocks s'exécutent dans l'environnement Node de Jest.
+    files: ["src/**/__tests__/**/*.{js,jsx}", "src/__tests__/**/*.{js,jsx}", "src/__mocks__/**/*.{js,jsx}"],
+    languageOptions: { globals: { ...globals.node } },
+  },
 ];

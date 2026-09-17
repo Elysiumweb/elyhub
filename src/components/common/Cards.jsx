@@ -6,6 +6,7 @@ import { GameBadge, OfficialBadge, StatusBadge } from "./Badges";
 import { cn } from "@/lib/utils";
 import { isVerified } from "@/lib/profile";
 import { countryLabel } from "@/lib/constants";
+import { isOfficialItem } from "@/lib/db";
 
 export const Avatar = ({ src, name, size = "h-10 w-10", round = false, className }) => (
   <div className={cn(size, "shrink-0 overflow-hidden border border-white/10 bg-[#1A1A1A] grid place-items-center font-display text-xs text-[#D8CA82]", round ? "rounded-full" : "rounded-sm", className)}>
@@ -24,14 +25,15 @@ export const TeamCard = ({ team }) => {
   const { getGame } = useGames();
   const { t } = useI18n();
   const g = getGame(team.gameId);
+  const official = isOfficialItem(team);
   return (
-    <Shell to={`/teams/${team.id}`} official={team.isOfficial} color={g.color} testId={`team-card-${team.id}`}>
+    <Shell to={`/teams/${team.id}`} official={official} color={g.color} testId={`team-card-${team.id}`}>
       <div className="flex items-start gap-3">
         <Avatar src={team.logo} name={team.name} size="h-12 w-12" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-display text-sm uppercase tracking-wide text-white truncate group-hover:text-[#D8CA82] transition-colors">{team.name}</h3>
-            {team.isOfficial && <OfficialBadge />}
+            {official && <OfficialBadge />}
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-zinc-400">
             <GameBadge game={g} />
@@ -49,14 +51,15 @@ export const OfferCard = ({ offer }) => {
   const { getGame } = useGames();
   const { t } = useI18n();
   const g = getGame(offer.gameId);
+  const official = isOfficialItem(offer);
   return (
-    <Shell to={`/offers/${offer.id}`} official={offer.isOfficial} color={g.color} testId={`offer-card-${offer.id}`}>
+    <Shell to={`/offers/${offer.id}`} official={official} color={g.color} testId={`offer-card-${offer.id}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <Briefcase className="h-4 w-4 text-[#D8CA82]" />
-            <h3 className="font-display text-sm uppercase tracking-wide text-white truncate">{offer.role}</h3>
-            {offer.isOfficial && <OfficialBadge />}
+            <h3 className="font-display text-sm uppercase tracking-wide text-white truncate">{offer.role || t("offer")}</h3>
+            {official && <OfficialBadge />}
           </div>
           <p className="text-xs text-zinc-400 mt-1">{offer.teamName}</p>
           <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-400">
@@ -77,14 +80,15 @@ export const ScrimCard = ({ scrim }) => {
   const { getGame } = useGames();
   const { t, formatDate } = useI18n();
   const g = getGame(scrim.gameId);
+  const official = isOfficialItem(scrim);
   return (
-    <Shell to={`/scrims/${scrim.id}`} official={scrim.isOfficial} color={g.color} testId={`scrim-card-${scrim.id}`}>
+    <Shell to={`/scrims/${scrim.id}`} official={official} color={g.color} testId={`scrim-card-${scrim.id}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <Swords className="h-4 w-4 text-[#D8CA82]" />
-            <h3 className="font-display text-sm uppercase tracking-wide text-white truncate">{scrim.teamName}</h3>
-            {scrim.isOfficial && <OfficialBadge />}
+            <h3 className="font-display text-sm uppercase tracking-wide text-white truncate">{scrim.teamName || "—"}</h3>
+            {official && <OfficialBadge />}
             {scrim.opponentTeamName && <span className="text-xs text-zinc-400">vs <b className="text-white">{scrim.opponentTeamName}</b></span>}
           </div>
           <div className="mt-1 text-xs font-semibold" style={{ color: g.color }}>{g.name}</div>
@@ -106,15 +110,16 @@ export const TournamentCard = ({ tournament: tr }) => {
   const { getGame } = useGames();
   const { t, formatDate } = useI18n();
   const g = getGame(tr.gameId);
-  const left = tr.slots - (tr.registeredTeamIds?.length || 0);
+  const official = isOfficialItem(tr);
+  const left = (tr.slots || 0) - (tr.registeredTeamIds?.length || 0);
   return (
-    <Shell to={`/tournaments/${tr.id}`} official={tr.isOfficial} color={g.color} testId={`tournament-card-${tr.id}`}>
+    <Shell to={`/tournaments/${tr.id}`} official={official} color={g.color} testId={`tournament-card-${tr.id}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <Trophy className="h-4 w-4 text-[#D8CA82]" />
-            <h3 className="font-display text-sm uppercase tracking-wide text-white truncate">{tr.name}</h3>
-            {tr.isOfficial && <OfficialBadge />}
+            <h3 className="font-display text-sm uppercase tracking-wide text-white truncate">{tr.name || "—"}</h3>
+            {official && <OfficialBadge />}
           </div>
           {tr.organizerName && <p className="text-xs text-zinc-400 mt-1">{t("by")} {tr.organizerName}</p>}
           <div className="mt-2 flex flex-wrap gap-2 text-xs text-zinc-400">
@@ -136,12 +141,14 @@ export const TournamentCard = ({ tournament: tr }) => {
 export const PlayerCard = ({ player }) => {
   const { getGame } = useGames();
   const country = player.country ? countryLabel(player.country) : null;
+  const official = isOfficialItem(player);
   return (
-    <Link to={`/players/${player.id}`} data-testid={`player-card-${player.id}`} className="card-elysium p-4 flex items-center gap-3">
+    <Link to={`/players/${player.id}`} data-testid={`player-card-${player.id}`} className={cn("card-elysium p-4 flex items-center gap-3", official && "card-official")}>
       <Avatar src={player.avatar} name={player.pseudo} round size="h-11 w-11" />
       <div className="min-w-0">
         <h3 className="font-display text-sm uppercase tracking-wide text-white flex items-center gap-1.5">
-          <span className="truncate">{player.pseudo}</span>
+          <span className="truncate">{player.pseudo || "—"}</span>
+          {official && <OfficialBadge />}
           {isVerified(player) && <BadgeCheck data-testid={`player-verified-${player.id}`} className="h-3.5 w-3.5 text-emerald-400 shrink-0" />}
         </h3>
         <div className="mt-1 flex flex-wrap gap-1.5 text-xs text-zinc-400">

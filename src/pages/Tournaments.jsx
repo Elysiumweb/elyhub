@@ -57,7 +57,7 @@ export function TournamentCreate() {
     try {
       const org = teams.data.find((x) => x.id === f.organizerTeamId);
       const { organizerTeamId: _organizerTeamId, ...rest } = f;
-      const ref = await createTournament({ ...rest, name: f.name.trim(), slots: Number(f.slots) }, user.uid, org);
+      const ref = await createTournament({ ...rest, name: f.name.trim(), slots: Number(f.slots) }, user.uid, org, profile?.role);
       toast.success(t("tournament_created")); nav(`/tournaments/${ref.id}`);
     } catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };

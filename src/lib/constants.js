@@ -165,4 +165,6 @@ export const STATUS_STYLES = {
   done: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   archived: "bg-zinc-700/40 text-zinc-500 border-zinc-600/40",
   "in-test": "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
+  resolved: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  dismissed: "bg-zinc-500/20 text-zinc-300 border-zinc-500/40",
 };

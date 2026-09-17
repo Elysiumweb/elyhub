@@ -81,7 +81,10 @@ export default function Messages() {
   const { data, loading } = useCollection("conversations", [where("participantIds", "array-contains", profile?.id || "-")], [profile?.id], !!profile);
   const convs = [...data].sort((a, b) => (b.lastAt || 0) - (a.lastAt || 0));
   const active = convs.find((c) => c.id === id);
-  useEffect(() => { if (!id && convs[0] && window.innerWidth >= 768) nav(`/messages/${convs[0].id}`, { replace: true }); }, [id, convs, nav]);
+  // Dépendances primitives : `convs` est un NOUVEAU tableau à chaque rendu —
+  // le mettre en dépendance re-déclenchait l'effet en boucle (nav → re-rendu).
+  const firstId = convs[0]?.id;
+  useEffect(() => { if (!id && firstId && window.innerWidth >= 768) nav(`/messages/${firstId}`, { replace: true }); }, [id, firstId, nav]);
 
   return (
     <div className="grid md:grid-cols-[320px_1fr] border border-white/10 bg-[#141414] h-[calc(100vh-14rem)] min-h-[520px]" data-testid="messages-page">
