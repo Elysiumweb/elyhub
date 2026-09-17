@@ -9,6 +9,7 @@ import { useI18n } from "@/i18n";
 import { useCollection } from "@/hooks/useFirestore";
 import { createScrim, rankOfficial } from "@/lib/db";
 import { REGIONS, SCRIM_FORMATS, slugToGameId } from "@/lib/constants";
+import { teamGames } from "@/lib/profile";
 import { ScrimCard } from "@/components/common/Cards";
 import { GameBadge } from "@/components/common/Badges";
 import { RankSelect } from "@/components/common/RankSelect";
@@ -59,12 +60,15 @@ export function ScrimCreate() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const teams = useCollection("teams", [where("ownerId", "==", user?.uid || "-")], [user?.uid], !!user);
-  const [f, setF] = useState({ teamId: params.get("team") || "", date: "", rank: "", region: profile?.region || "EU", format: "BO3", notes: "" });
+  const [f, setF] = useState({ teamId: params.get("team") || "", date: "", rank: "", region: profile?.region || "EU", format: "BO3", notes: "", scrimGame: "" });
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const teamId = f.teamId || teams.data[0]?.id;
   const team = teams.data.find((x) => x.id === teamId);
-  const g = team ? getGame(team.gameId) : null;
+  // Équipe multi-jeux : le scrim est publié pour un des jeux de l'équipe.
+  const teamGameIds = team ? teamGames(team) : [];
+  const scrimGame = f.scrimGame || teamGameIds[0] || "";
+  const g = team ? getGame(scrimGame) : null;
 
   if (!teams.loading && teams.data.length === 0) return <div className="max-w-3xl"><PageTitle eyebrow={t("nav_scrims")} title={t("publish_scrim")} /><EmptyState title={t("no_team_yet")} description={t("scrim_need_team_desc")} action={t("create_team")} to="/teams/new" testId="empty-scrim-create" /></div>;
 
@@ -73,7 +77,7 @@ export function ScrimCreate() {
     const team = teams.data.find((x) => x.id === teamId);
     if (!team) return;
     setBusy(true);
-    try { const ref = await createScrim({ ...f, teamId }, team, user.uid); toast.success(t("scrim_published")); nav(`/scrims/${ref.id}`); }
+    try { const ref = await createScrim({ ...f, teamId, gameId: scrimGame }, team, user.uid); toast.success(t("scrim_published")); nav(`/scrims/${ref.id}`); }
     catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };
 
@@ -82,10 +86,18 @@ export function ScrimCreate() {
       <PageTitle eyebrow={t("nav_scrims")} title={t("publish_scrim")} />
       <form onSubmit={submit} className="card-elysium p-6 space-y-6" data-testid="scrim-create-form">
         <div className="grid md:grid-cols-2 gap-6">
-          <Field label={t("team")} required><select data-testid="scrim-team-select" className="input-elysium" value={teamId || ""} onChange={(e) => setF({ ...f, teamId: e.target.value, rank: "" })}>{teams.data.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
-          <Field label={t("game")}><div className="input-elysium flex items-center" data-testid="scrim-game-display">{g ? <GameBadge game={g} /> : "…"}</div></Field>
+          <Field label={t("team")} required><select data-testid="scrim-team-select" className="input-elysium" value={teamId || ""} onChange={(e) => setF({ ...f, teamId: e.target.value, rank: "", scrimGame: "" })}>{teams.data.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
+          {teamGameIds.length > 1 ? (
+            <Field label={t("game")} required>
+              <select data-testid="scrim-game-select" className="input-elysium" value={scrimGame} onChange={(e) => setF({ ...f, scrimGame: e.target.value, rank: "" })}>
+                {teamGameIds.map((gid) => <option key={gid} value={gid}>{getGame(gid)?.name}</option>)}
+              </select>
+            </Field>
+          ) : (
+            <Field label={t("game")}><div className="input-elysium flex items-center" data-testid="scrim-game-display">{g ? <GameBadge game={g} /> : "…"}</div></Field>
+          )}
           <Field label={t("date_time")} required><input data-testid="scrim-date-input" type="datetime-local" required className="input-elysium" value={f.date} onChange={set("date")} /></Field>
-          <Field label={t("rank_wanted")}><RankSelect gameId={team?.gameId} value={f.rank} onChange={(v) => setF({ ...f, rank: v })} testId="scrim-rank-select" /></Field>
+          <Field label={t("rank_wanted")}><RankSelect gameId={scrimGame} value={f.rank} onChange={(v) => setF({ ...f, rank: v })} testId="scrim-rank-select" /></Field>
           <Field label={t("region")} required><select data-testid="scrim-region-select" className="input-elysium" value={f.region} onChange={set("region")}>{REGIONS.map((r) => <option key={r}>{r}</option>)}</select></Field>
           <Field label={t("format")} required><select data-testid="scrim-format-select" className="input-elysium" value={f.format} onChange={set("format")}>{SCRIM_FORMATS.map((x) => <option key={x}>{x}</option>)}</select></Field>
         </div>

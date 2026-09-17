@@ -10,6 +10,7 @@ import { useGames } from "@/hooks/useGames";
 import Seo, { ldJobPosting } from "@/components/common/Seo";
 import { applyToOffer, createOffer, updateOffer } from "@/lib/db";
 import { REGIONS } from "@/lib/constants";
+import { teamGames } from "@/lib/profile";
 import { Field, PageTitle, Skeletons } from "@/components/common/States";
 import { RankSelect } from "@/components/common/RankSelect";
 import { GameBadge, OfficialBadge, StatusBadge } from "@/components/common/Badges";
@@ -23,26 +24,37 @@ export function OfferCreate() {
   const { getGame } = useGames();
   const nav = useNavigate();
   const { data: team } = useDocument("teams", teamId);
-  const [f, setF] = useState({ role: "", rank: "", region: "EU", availability: "", description: "" });
+  const [f, setF] = useState({ role: "", rank: "", region: "EU", availability: "", description: "", offerGame: "" });
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  // Équipe multi-jeux : l'offre est publiée pour un des jeux de l'équipe.
+  const teamGameIds = team ? teamGames(team) : [];
+  const offerGame = f.offerGame || teamGameIds[0] || "";
+  const g = team ? getGame(offerGame) : null;
   const submit = async (e) => {
     e.preventDefault(); setBusy(true);
     try {
       if (!team || team.ownerId !== user.uid) throw new Error("forbidden");
-      const ref = await createOffer({ ...f, role: f.role.trim() }, team, user.uid);
+      const ref = await createOffer({ ...f, role: f.role.trim(), gameId: offerGame }, team, user.uid);
       toast.success(t("offer_created")); nav(`/offers/${ref.id}`);
     } catch { toast.error(t("err_generic")); } finally { setBusy(false); }
   };
-  const g = team ? getGame(team.gameId) : null;
   return (
     <div className="max-w-3xl">
       <PageTitle eyebrow={t("recruitment")} title={t("create_offer")}>{team && <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400"><span>{team.name}</span><span className="text-zinc-600">·</span><GameBadge game={g} size="lg" /></div>}</PageTitle>
       <form onSubmit={submit} className="card-elysium p-6 space-y-6" data-testid="offer-create-form">
         <div className="grid md:grid-cols-2 gap-6">
-          <Field label={t("game")} required><div className="input-elysium flex items-center" data-testid="offer-game-display">{g ? <GameBadge game={g} /> : "…"}</div></Field>
+          {teamGameIds.length > 1 ? (
+            <Field label={t("game")} required>
+              <select data-testid="offer-game-select" className="input-elysium" value={offerGame} onChange={(e) => setF({ ...f, offerGame: e.target.value, rank: "" })}>
+                {teamGameIds.map((gid) => <option key={gid} value={gid}>{getGame(gid)?.name}</option>)}
+              </select>
+            </Field>
+          ) : (
+            <Field label={t("game")} required><div className="input-elysium flex items-center" data-testid="offer-game-display">{g ? <GameBadge game={g} /> : "…"}</div></Field>
+          )}
           <Field label={t("role_wanted")} required><input data-testid="offer-role-input" required className="input-elysium" value={f.role} onChange={set("role")} placeholder="Duelist / Jungler / AWPer" /></Field>
-          <Field label={t("rank_min")}><RankSelect gameId={team?.gameId} value={f.rank} onChange={(v) => setF({ ...f, rank: v })} testId="offer-rank-select" /></Field>
+          <Field label={t("rank_min")}><RankSelect gameId={offerGame} value={f.rank} onChange={(v) => setF({ ...f, rank: v })} testId="offer-rank-select" /></Field>
           <Field label={t("region")} required><select data-testid="offer-region-select" className="input-elysium" value={f.region} onChange={set("region")}>{REGIONS.map((r) => <option key={r}>{r}</option>)}</select></Field>
           <Field label={t("availability")}><input data-testid="offer-availability-input" className="input-elysium" value={f.availability} onChange={set("availability")} placeholder={t("availability_placeholder")} /></Field>
         </div>

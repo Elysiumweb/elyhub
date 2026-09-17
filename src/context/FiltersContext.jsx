@@ -22,10 +22,13 @@ export function FiltersProvider({ children }) {
   // sans modifier les filtres globaux persistés.
   const apply = (items, { regionKey = "region", gameKey = "gameId", langKey = "languages", countryKey = "country" } = {}, overrides = {}) => {
     const f = { ...filters, ...overrides };
+    // Match de jeu : champ unique (gameId) OU liste multi-jeux d'une équipe
+    // (gameIds) — une équipe multijeu apparaît dans l'annuaire de chacun de ses jeux.
+    const gameMatch = (it) => !f.gameId || it[gameKey] === f.gameId || (Array.isArray(it.gameIds) && it.gameIds.includes(f.gameId));
     return items.filter(
       (it) =>
         (!f.region || it[regionKey] === f.region) &&
-        (!f.gameId || it[gameKey] === f.gameId) &&
+        gameMatch(it) &&
         (!f.country || it[countryKey] === f.country) &&
         (!f.language || !it[langKey] || (Array.isArray(it[langKey]) ? it[langKey].includes(f.language) : it[langKey] === f.language)),
     );

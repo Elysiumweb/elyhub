@@ -5,8 +5,9 @@ import { Send, Ban, Flag, MessageSquare, Swords } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
-import { useCollection } from "@/hooks/useFirestore";
+import { useCollection, useDocument } from "@/hooks/useFirestore";
 import { sendMessage, toggleBlock, reportConversation } from "@/lib/db";
+import { isMinorProfile } from "@/lib/profile";
 import { Avatar } from "@/components/common/Cards";
 import { EmptyState, Skeletons } from "@/components/common/States";
 
@@ -21,6 +22,11 @@ const Thread = ({ conv, me }) => {
   const others = conv.participantIds.filter((p) => p !== me.id).map((p) => conv.participants?.[p]?.name).filter(Boolean);
   const blockedByMe = conv.blockedBy?.includes(me.id);
   const blocked = (conv.blockedBy || []).length > 0;
+  // Protection des mineurs : messagerie directe restreinte quand l'autre
+  // participant a déclaré un âge mineur (profils publics).
+  const isDirectPlayer = !conv.teamId && conv.type !== "match";
+  const { data: otherProfile } = useDocument("profiles", otherId, isDirectPlayer);
+  const minorRestricted = isDirectPlayer && isMinorProfile(otherProfile);
 
   const send = async (e) => {
     e.preventDefault();
@@ -55,12 +61,14 @@ const Thread = ({ conv, me }) => {
         })}
         <div ref={endRef} />
       </div>
-      {blocked ? <div data-testid="thread-blocked-banner" className="p-3 text-xs text-center text-red-400 border-t border-red-500/20 bg-red-500/5">{t("conversation_blocked")}</div> : (
-        <form onSubmit={send} className="p-3 border-t border-white/10 flex gap-2 bg-[#161616]">
-          <input data-testid="message-input" className="input-elysium" value={text} onChange={(e) => setText(e.target.value)} placeholder={t("write_message")} maxLength={4000} />
-          <button data-testid="message-send-button" className="btn-gold px-4"><Send className="h-4 w-4" /></button>
-        </form>
-      )}
+      {blocked ? <div data-testid="thread-blocked-banner" className="p-3 text-xs text-center text-red-400 border-t border-red-500/20 bg-red-500/5">{t("conversation_blocked")}</div>
+        : minorRestricted ? <div data-testid="thread-minor-restricted" className="p-3 text-xs text-center text-yellow-400 border-t border-yellow-500/20 bg-yellow-500/5">{t("minor_dm_restricted")}</div>
+          : (
+            <form onSubmit={send} className="p-3 border-t border-white/10 flex gap-2 bg-[#161616]">
+              <input data-testid="message-input" className="input-elysium" value={text} onChange={(e) => setText(e.target.value)} placeholder={t("write_message")} maxLength={4000} />
+              <button data-testid="message-send-button" className="btn-gold px-4"><Send className="h-4 w-4" /></button>
+            </form>
+          )}
     </div>
   );
 };

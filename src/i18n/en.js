@@ -33,8 +33,9 @@ export const en = {
   err_invalid_credentials: "Invalid credentials", err_email_in_use: "This email is already in use", err_weak_password: "Password too weak (min. 6 chars)",
   err_invalid_email: "Invalid email", err_popup_closed: "Login popup closed", err_unauthorized_domain: "Domain not authorised in Firebase Auth",
   err_generic: "Something went wrong", reset_sent: "Reset email sent",
-  err_pseudo_required: "Nickname is required", err_game_required: "Pick at least one game",
+  err_pseudo_required: "Nickname is required", err_game_required: "Pick at least one game", err_age_required: "Pick your age range (minor protection).",
   error_loading: "Could not load data", error_loading_desc: "A connection or permissions error is preventing the read. Try again in a moment.",
+  page_crashed: "Something went wrong on this page", page_crashed_desc: "The error was contained to this page: reload it or go back home — the rest of the site stays available.",
 
   // ── Connexion ──
   login_hero_1: "Recruit. Scrim.", login_hero_2: "Dominate.", login_hero_desc: "ElyHub brings players, organisations and organisers together: recruitment, scrims and tournaments in one place.",
@@ -43,7 +44,9 @@ export const en = {
 
   // ── Onboarding / profil ──
   profile_saved: "Profile saved", pseudo: "Nickname", region: "Region", avatar: "Avatar", your_games: "Your games", roles: "Roles", roles_hint: "Comma separated",
-  languages: "Languages", bio: "Bio", step_1: "Step 1 / 1", onboarding_title: "Player profile",
+  languages: "Languages", bio: "Bio", step_1: "Step 1 / 3", step_2: "Step 2 / 3", step_3: "Step 3 / 3",
+  onb_step_1: "Identity", onb_step_2: "Games & ranks", onb_step_3: "Availability", onboarding_title: "Player profile",
+  next: "Next", optional: "Optional", no_schedule: "No availability set",
   onboarding_desc: "Complete your profile to apply, join teams and take part in scrims.", finish_onboarding: "Finish", view_public_profile: "Public profile",
   your_rank: "Your rank", rank_for_game: "Rank per game", rank_hint: "Your current ladder rank — used for matchmaking and filters.",
   level: "Level", all_levels: "All levels", level_amateur: "Amateur", "level_semi-pro": "Semi-pro", level_pro: "Pro", level_hint: "Your ambition: casual, semi-competitive or professional.",
@@ -57,7 +60,11 @@ export const en = {
   media_showcase: "Media showcase", vod_link: "VOD / clip / highlight link", vod_hint: "A URL to your best play (YouTube, Twitch, Streamable…).",
 
   // ── Compte ──
+  acc_tab_profile: "Profile", acc_tab_security: "Security", acc_tab_privacy: "Privacy", acc_tab_data: "Data",
   change_email: "Change email", change_password: "Change password", new_email: "New email", new_password: "New password",
+  confirm_password: "Confirm password", password_mismatch: "Passwords do not match",
+  err_recent_login: "Session too old — log in again and try.",
+  danger_zone: "Danger zone",
   current_password: "Current password", email_updated: "Email updated", password_updated: "Password updated",
   export_data: "Export my data", export_data_desc: "Download all your personal data (GDPR — right to portability).", data_exported: "Export downloaded",
   delete_account: "Delete my account", delete_account_desc: "Permanently deletes your account and purges your data (GDPR).", delete_account_confirm: "Really delete your account? This cannot be undone.",
@@ -126,6 +133,9 @@ export const en = {
   tab_tournaments: "Tournaments", tab_settings: "Settings", add_palmares: "Add achievement", title: "Title", placement: "Placement", date: "Date",
   message: "Message", browse_tournaments: "Browse tournaments", no_tournaments_registered: "No tournament entered",
   no_tournaments_registered_desc: "Register your team from a tournament page.", member_role: "Role", change_role: "Change role", role_updated: "Role updated",
+  team_games: "Team games", team_games_hint: "Multiple games allowed — the first one selected is the primary game (announcements and filters).",
+  team_deleted: "Team deleted", team_archived: "Team archived", team_restored: "Team restored",
+  time_from: "From", time_to: "To", no_training: "No training schedule set.",
 
   // ── Joueurs ──
   players_title: "Players", no_players: "No players", no_players_desc: "No player matches these filters.", member_since: "Member since",

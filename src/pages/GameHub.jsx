@@ -37,17 +37,25 @@ export default function GameHub() {
   const section = SECTION_MAP[rawSection] || "teams";
 
   // Un seul abonnement à la fois : la section active uniquement.
+  // Joueurs = projection publique profiles/{uid} (users est privé, cf. rules).
   const { data, loading } = useCollection(
-    section === "players" ? "users" : section === "lft" ? "lft" : section,
+    section === "players" ? "profiles" : section === "lft" ? "lft" : section,
     section === "players" ? [where("games", "array-contains", gameId), limit(24)] : [where("gameId", "==", gameId), limit(24)],
     [section, gameId],
   );
+  // Équipes multi-jeux : les équipes existantes n'ont que `gameId` (jeu
+  // principal, requête ci-dessus), les nouvelles ont `gameIds` (tous les jeux).
+  // Deux requêtes server-side fusionnées sans doublon (Firestore n'a pas d'OR).
+  const multiTeams = useCollection("teams", [where("gameIds", "array-contains", gameId), limit(24)], [section, gameId], section === "teams");
 
   if (!game) return <NotFound />;
   if (game.id !== gameId) return <Navigate to={`/${slug}`} replace />;
 
   const [titleKey, allKey, base] = TITLES[section];
-  const list = section === "players" ? data.filter((p) => p.onboarded) : data;
+  const baseData = section === "players" ? data.filter((p) => p.onboarded && p.visibility?.hideDirectory !== false)
+    : section === "teams" ? [...data, ...multiTeams.data.filter((x) => !data.some((y) => y.id === x.id))]
+      : data;
+  const list = baseData.slice(0, 24);
 
   const renderCard = (item) => {
     switch (section) {

@@ -8,6 +8,7 @@ import { useI18n } from "@/i18n";
 import { useDocument, useCollection } from "@/hooks/useFirestore";
 import { useGames } from "@/hooks/useGames";
 import { findOrCreateConversation, relaunchScrim, updateScrim, getTeam } from "@/lib/db";
+import { teamGames } from "@/lib/profile";
 import { Avatar } from "@/components/common/Cards";
 import { GameBadge, OfficialBadge, StatusBadge } from "@/components/common/Badges";
 import { Skeletons } from "@/components/common/States";
@@ -32,7 +33,8 @@ export default function ScrimDetail() {
   const isOwner = user?.uid === s.ownerId;
   const isOpponent = user?.uid === s.opponentOwnerId;
   const involved = isOwner || isOpponent;
-  const candidates = myTeams.data.filter((tm) => tm.gameId === s.gameId && tm.id !== s.teamId);
+  // Équipes multi-jeux : éligible si le jeu du scrim fait partie de ses jeux.
+  const candidates = myTeams.data.filter((tm) => teamGames(tm).includes(s.gameId) && tm.id !== s.teamId);
   const stepIdx = s.status === "cancelled" ? -1 : STEPS.indexOf(s.status);
   const iCancelled = s.cancelledBy === user?.uid;
   const showRelaunch = s.status === "cancelled" && involved && !iCancelled && !s.relaunched;

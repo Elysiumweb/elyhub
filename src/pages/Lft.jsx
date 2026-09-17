@@ -59,7 +59,8 @@ export function LftCreate() {
   const { profile } = useAuth();
   const { t } = useI18n();
   const nav = useNavigate();
-  const [f, setF] = useState({ gameId: profile?.games?.[0] || "", rank: "", roles: (profile?.roles || []).join(", "), region: profile?.region || "EU", availability: "", message: "" });
+  // Le rang est pré-rempli depuis le profil (rangs par jeu) quand le joueur l'a renseigné.
+  const [f, setF] = useState({ gameId: profile?.games?.[0] || "", rank: profile?.ranksByGame?.[profile?.games?.[0]] || "", roles: (profile?.roles || []).join(", "), region: profile?.region || "EU", availability: "", message: "" });
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const submit = async (e) => {
@@ -73,7 +74,7 @@ export function LftCreate() {
     <div className="max-w-3xl">
       <PageTitle eyebrow={t("nav_players")} title={t("create_lft")}><p className="text-sm text-zinc-400 mt-2">{t("create_lft_desc")}</p></PageTitle>
       <form onSubmit={submit} className="card-elysium p-6 space-y-6" data-testid="lft-create-form">
-        <Field label={t("game")} required><GameSelector value={f.gameId} onChange={(v) => setF({ ...f, gameId: v, rank: "" })} testId="lft-game-selector" allowCreate={false} /></Field>
+        <Field label={t("game")} required><GameSelector value={f.gameId} onChange={(v) => setF({ ...f, gameId: v, rank: profile?.ranksByGame?.[v] || "" })} testId="lft-game-selector" allowCreate={false} /></Field>
         <div className="grid md:grid-cols-2 gap-6">
           <Field label={t("your_rank")}><RankSelect gameId={f.gameId} value={f.rank} onChange={(v) => setF({ ...f, rank: v })} testId="lft-rank-select" /></Field>
           <Field label={t("region")} required><select data-testid="lft-region-select" className="input-elysium" value={f.region} onChange={set("region")}>{REGIONS.map((r) => <option key={r}>{r}</option>)}</select></Field>

@@ -6,6 +6,7 @@ import { db } from "./firebase";
 import { ADMIN_UID } from "./constants";
 import { applyMatchToElo, ELO_INITIAL } from "./elo";
 import { localToDate } from "./time";
+import { normalizeTeamGames, profileToPublic } from "./profile";
 
 export const now = () => Date.now();
 export const isOfficialUid = (uid) => Boolean(ADMIN_UID) && uid === ADMIN_UID;
@@ -26,8 +27,33 @@ export const saveProfile = (uid, data) => setDoc(doc(db, "users", uid), { ...dat
 export const publishProfile = (uid, data) =>
   setDoc(doc(db, "profiles", uid), { ...data, updatedAt: now() }, { merge: true });
 
+// Sauvegarde « complète » du profil : document privé users/{uid} + projection
+// publique profiles/{uid} (l'annuaire et les fiches publiques lisent profiles).
+export const saveProfileFull = async (uid, data) => {
+  await saveProfile(uid, data);
+  try {
+    await publishProfile(uid, profileToPublic(data));
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error("[profile] publication de la projection publique échouée", e);
+  }
+  return data;
+};
+
 export const banUser = (uid, banned = true) => updateDoc(doc(db, "users", uid), { banned, bannedAt: now() });
 export const setUserRole = (uid, role) => updateDoc(doc(db, "users", uid), { role });
+
+// Suppression de compte (RGPD) : doc privé + projection publique + alertes.
+// Les conversations et signalements sont conservés 12 mois (politique de
+// confidentialité) puis purgés — cf. Legal/privacy.
+export const deleteAccount = async (uid) => {
+  const [alerts] = await Promise.all([
+    getDocs(query(collection(db, "alerts"), where("userId", "==", uid))).catch(() => null),
+    deleteDoc(doc(db, "users", uid)).catch(() => null),
+    deleteDoc(doc(db, "profiles", uid)).catch(() => null),
+  ]);
+  if (alerts) await Promise.allSettled(alerts.docs.map((d) => deleteDoc(d.ref)));
+};
 
 // ─────────────────────────── Games ───────────────────────────
 export const createGame = (name, uid) =>
@@ -37,12 +63,21 @@ export const createGame = (name, uid) =>
 export const setGameStatus = (id, status) => updateDoc(doc(db, "games", id), { status });
 
 // ─────────────────────────── Teams ───────────────────────────
+// Équipes multi-jeux : `gameIds` = tous les jeux, `gameId` = jeu principal
+// (premier de la liste). Les données historiques n'ont que `gameId` —
+// `teamGames()` (lib/profile) lit les deux formes.
 export const createTeam = (data, uid) =>
   addDoc(collection(db, "teams"), {
-    ...data, ownerId: uid, memberIds: [uid], isOfficial: isOfficialUid(uid),
+    ...normalizeTeamGames(data), ownerId: uid, memberIds: [uid], isOfficial: isOfficialUid(uid),
     acceptMessages: true, palmares: [], createdAt: now(), status: "active", elo: ELO_INITIAL, eloGames: 0, rosterLog: [],
   });
-export const updateTeam = (id, data) => updateDoc(doc(db, "teams", id), { ...data, updatedAt: now() });
+// Le patch doit transmettre `gameIds` (et donc `gameId` primaire) en bloc pour
+// les changements de jeux — une mise à jour partielle sans `gameIds` ne les touche pas.
+export const updateTeam = (id, data) =>
+  updateDoc(doc(db, "teams", id), {
+    ...("gameIds" in data ? normalizeTeamGames(data) : data),
+    updatedAt: now(),
+  });
 export const getTeam = async (id) => {
   const s = await getDoc(doc(db, "teams", id));
   return s.exists() ? withId(s) : null;

@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { where } from "firebase/firestore";
-import { MapPin, Users, Trophy, Briefcase, MessageSquare, Settings } from "lucide-react";
+import { MapPin, Users, Trophy, Briefcase, MessageSquare, Settings, Pencil, Globe, Gamepad2, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { useDocument, useCollection } from "@/hooks/useFirestore";
 import { useGames } from "@/hooks/useGames";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
 import { findOrCreateConversation, rankOfficial } from "@/lib/db";
+import { teamGames, hasSchedule } from "@/lib/profile";
+import { WEEKDAYS } from "@/lib/constants";
 import { Avatar, OfferCard } from "@/components/common/Cards";
 import { GameBadge, OfficialBadge } from "@/components/common/Badges";
 import { EmptyState, Skeletons } from "@/components/common/States";
@@ -28,6 +30,7 @@ export default function TeamDetail() {
   if (loading) return <Skeletons n={3} />;
   if (!team) return <NotFound />;
   const g = getGame(team.gameId);
+  const games = teamGames(team);
   const isOwner = user?.uid === team.ownerId;
   const isMember = team.memberIds?.includes(user?.uid);
   const openOffers = rankOfficial(offers.data.filter((o) => o.status === "open"));
@@ -56,6 +59,7 @@ export default function TeamDetail() {
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-400">
               <GameBadge game={g} size="lg" />
+              {games.slice(1).map((gid) => <GameBadge key={gid} game={getGame(gid)} />)}
               <span className="badge border-white/10 text-zinc-300"><MapPin className="h-3 w-3" />{team.region}</span>
               <span className="badge border-white/10 text-zinc-300"><Users className="h-3 w-3" />{team.memberIds?.length || 0} {t("members")}</span>
               {(team.languages || []).map((l) => <span key={l} className="badge border-white/10 text-zinc-400">{t(`lang_${l}`)}</span>)}
@@ -63,7 +67,8 @@ export default function TeamDetail() {
             {team.description && <p className="mt-4 text-sm text-zinc-300 max-w-2xl whitespace-pre-line">{team.description}</p>}
           </div>
           <div className="flex flex-col gap-2 w-full sm:w-auto">
-            {isOwner && <Link to={`/dashboard?team=${team.id}`} data-testid="team-dashboard-button" className="btn-gold text-xs"><Settings className="h-4 w-4" />{t("nav_dashboard")}</Link>}
+            {isOwner && <Link to={`/dashboard?team=${team.id}&tab=settings`} data-testid="team-edit-button" className="btn-gold text-xs"><Pencil className="h-4 w-4" />{t("edit_team")}</Link>}
+            {isOwner && <Link to={`/dashboard?team=${team.id}`} data-testid="team-dashboard-button" className="btn-outline text-xs"><Settings className="h-4 w-4" />{t("nav_dashboard")}</Link>}
             {!isMember && openOffers.length > 0 && <a href="#offers" data-testid="team-apply-button" className="btn-gold text-xs"><Briefcase className="h-4 w-4" />{t("apply")}</a>}
             {canContact && <button data-testid="team-contact-button" onClick={contact} disabled={busy} className="btn-outline text-xs"><MessageSquare className="h-4 w-4" />{t("contact")}</button>}
             {!user && <Link to="/login" data-testid="team-login-cta" className="btn-outline text-xs">{t("login_to_apply")}</Link>}
@@ -89,17 +94,46 @@ export default function TeamDetail() {
             {offers.loading ? <Skeletons n={1} className="h-20" /> : openOffers.length ? <div className="grid gap-3">{openOffers.map((o) => <OfferCard key={o.id} offer={o} />)}</div> : <EmptyState title={t("no_offers")} description={t("team_no_offers_desc")} testId="empty-team-offers" />}
           </div>
         </section>
-        <aside>
-          <h2 className="section-title"><Trophy className="h-3.5 w-3.5" />{t("palmares")}</h2>
-          {team.palmares?.length ? (
-            <ol className="relative border-l border-[#D8CA82]/30 ml-2 space-y-4" data-testid="team-palmares">
-              {team.palmares.map((p, i) => (
-                <li key={i} className="pl-4 relative"><span className="absolute -left-[5px] top-1.5 h-2 w-2 bg-[#D8CA82]" />
-                  <div className="text-sm font-semibold text-white">{p.title}</div>
-                  <div className="text-xs text-zinc-400">{p.place}{p.date && ` · ${formatDate(p.date)}`}</div></li>
-              ))}
-            </ol>
-          ) : <p className="text-xs text-zinc-500" data-testid="empty-palmares">{t("no_palmares")}</p>}
+        <aside className="space-y-8">
+          <div>
+            <h2 className="section-title"><CalendarDays className="h-3.5 w-3.5" />{t("training_schedule")}</h2>
+            {hasSchedule(team.trainingSchedule) ? (
+              <div className="flex flex-wrap gap-1.5" data-testid="team-training">
+                {team.trainingSchedule.map((s, i) => (
+                  <span key={i} className="badge border-[#D8CA82]/40 text-[#D8CA82]">
+                    {WEEKDAYS.find((d) => d.id === s.day) ? t(WEEKDAYS.find((d) => d.id === s.day).key) : s.day} {s.from}–{s.to}
+                  </span>
+                ))}
+              </div>
+            ) : <p className="text-xs text-zinc-500" data-testid="empty-training">{t("no_training")}</p>}
+          </div>
+          <div>
+            <h2 className="section-title"><Gamepad2 className="h-3.5 w-3.5" />{t("team_games")}</h2>
+            <div className="flex flex-wrap gap-1.5" data-testid="team-games-list">
+              {games.map((gid) => <GameBadge key={gid} game={getGame(gid)} />)}
+            </div>
+          </div>
+          {(team.website || team.discord || team.teamType || team.founded || team.targetSize) && (
+            <div className="card-elysium p-4 space-y-2 text-xs text-zinc-300" data-testid="team-info">
+              {team.teamType && <div><span className="text-zinc-500">{t("team_type")} :</span> {t(`team_type_${team.teamType}`)}</div>}
+              {team.founded && <div><span className="text-zinc-500">{t("founder_date")} :</span> {team.founded}</div>}
+              {team.targetSize && <div><span className="text-zinc-500">{t("target_size")} :</span> {team.targetSize}</div>}
+              {team.website && <a href={team.website} target="_blank" rel="noreferrer" data-testid="team-website-link" className="flex items-center gap-1 text-[#D8CA82] hover:underline"><Globe className="h-3 w-3" />{team.website.replace(/^https?:\/\//, "")}</a>}
+              {team.discord && <div data-testid="team-discord">{t("discord_server")} : <span className="text-[#D8CA82]">{team.discord}</span></div>}
+            </div>
+          )}
+          <div>
+            <h2 className="section-title"><Trophy className="h-3.5 w-3.5" />{t("palmares")}</h2>
+            {team.palmares?.length ? (
+              <ol className="relative border-l border-[#D8CA82]/30 ml-2 space-y-4" data-testid="team-palmares">
+                {team.palmares.map((p, i) => (
+                  <li key={i} className="pl-4 relative"><span className="absolute -left-[5px] top-1.5 h-2 w-2 bg-[#D8CA82]" />
+                    <div className="text-sm font-semibold text-white">{p.title}</div>
+                    <div className="text-xs text-zinc-400">{p.place}{p.date && ` · ${formatDate(p.date)}`}</div></li>
+                ))}
+              </ol>
+            ) : <p className="text-xs text-zinc-500" data-testid="empty-palmares">{t("no_palmares")}</p>}
+          </div>
         </aside>
       </div>
     </div>

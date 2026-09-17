@@ -148,5 +148,7 @@ avec `react-snap` ; le sitemap dynamique + middleware couvrent l'indexation en a
 
 - `.github/workflows/ci.yml` : lint + tests + build sur push/PR.
 - Tests dans `src/**/__tests__/` : `bracket.test.js` (génération, standings),
-  `time.test.js` (fuseaux, relatifs), `utils.test.js` (ICS, ELO, normalisation).
+  `time.test.js` (fuseaux, relatifs), `utils.test.js` (ICS, ELO, normalisation),
+  `profile.test.js` (équipes multi-jeux, projection publique, disponibilités, vérification),
+  `src/pages/__tests__/pages.smoke.test.jsx` (rendu sans crash de toutes les pages).
 - `data-testid` est généralisé : un socle E2E (Playwright/Cypress) peut s'appuyer dessus.
