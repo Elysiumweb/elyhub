@@ -10,7 +10,7 @@ import { GameBadge, PendingBadge } from "./Badges";
 // Searchable game picker with inline "create game" (pending validation)
 export const GameSelector = ({ value, onChange, multiple = false, allowCreate = true, testId = "game-selector" }) => {
   const { games } = useGames();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { t } = useI18n();
   const [q, setQ] = useState("");
   const selected = multiple ? value || [] : value ? [value] : [];
@@ -27,7 +27,7 @@ export const GameSelector = ({ value, onChange, multiple = false, allowCreate = 
   };
   const create = async () => {
     if (!user) return toast.error(t("login_required"));
-    const ref = await createGame(q.trim(), user.uid);
+    const ref = await createGame(q.trim(), user.uid, profile?.role);
     toast.success(t("game_created_pending"));
     toggle(ref.id);
     setQ("");

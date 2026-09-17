@@ -54,7 +54,7 @@ export default function Events() {
           <EmptyState icon={CalendarDays} title={t("no_events")} description={t("events_desc")} testId="empty-events" />
         ) : (
           <div className="grid md:grid-cols-2 gap-3" data-testid="events-grid">
-            {[...data].sort((a, b) => (a.date || "").localeCompare(b.date || "")).map((ev) => (
+            {[...data].sort((a, b) => String(a.date || "").localeCompare(String(b.date || ""))).map((ev) => (
               <div key={ev.id} data-testid={`event-${ev.id}`} className="card-elysium p-4">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-[#D8CA82]" />

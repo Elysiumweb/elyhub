@@ -75,6 +75,25 @@ firebase deploy --only firestore:rules,firestore:indexes,storage
 - [`firestore.rules`](./firestore.rules) — propriété par collection, rôles `admin`/`moderator`
   (champ `role` du document `users/{uid}`), messagerie restreinte aux participants,
   escalade de rôle interdite, quotas d'écriture à durcir via Cloud Functions (voir `functions/`).
+
+### Panel admin & rôles
+
+Le compte administrateur dispose d'un panel (`/admin`, onglets **Demandes de jeux**
+et **Signalements**) : validation/refus/suppression des jeux proposés par la
+communauté, traitement des signalements (résoudre, classer, supprimer le contenu
+signalé, supprimer le signalement).
+
+- Autorisation côté Firestore : champ `role` = `admin` (ou `moderator`) sur
+  `users/{uid}`. **Bootstrap du premier admin** : la variable `ADMIN_UID`
+  (`.env` / Vercel) donne l'accès côté interface, mais les règles Firestore
+  exigent le champ `role` — ajoutez-le une fois dans la console Firebase
+  (Firestore → `users/{uid}` → `role: "admin"`). Le panel affiche l'UID à
+  modifier et la marche à suivre tant que ce champ est absent.
+- **Mise en avant** : tous les contenus du compte administrateur (annonces,
+  offres, scrims, tournois, LFT, équipe, fiche joueur) sont « officiels » et
+  remontent en tête des listes (accueil, annuaires, hubs) avec le badge Officiel.
+  La mise en avant est acquise via le champ `role: admin` du créateur à la
+  publication, ou via `ADMIN_UID` pour les contenus existants.
 - [`storage.rules`](./storage.rules) — images publiques en lecture, écriture par le propriétaire.
 - [`firestore.indexes.json`](./firestore.indexes.json) — index composites pour les tris/filtres.
 

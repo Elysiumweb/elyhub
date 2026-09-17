@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from "react";
+import { toEpoch } from "@/lib/time";
 import { fr } from "./fr";
 import { en } from "./en";
 import { de } from "./de";
@@ -41,8 +42,10 @@ export function I18nProvider({ children }) {
   };
   const formatDate = (v, withTime = false) => {
     if (!v) return "—";
-    const d = typeof v === "number" ? new Date(v) : new Date(v);
-    if (isNaN(d)) return String(v);
+    // toEpoch : accepte epoch ms, ISO string et Timestamp Firestore ({ seconds }).
+    const ms = toEpoch(v);
+    if (ms == null) return typeof v === "string" ? v : "—";
+    const d = new Date(ms);
     return d.toLocaleString(
       lang === "fr" ? "fr-FR" : lang === "en" ? "en-GB" : lang,
       withTime

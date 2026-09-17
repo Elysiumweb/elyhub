@@ -63,12 +63,14 @@ const PageLoader = () => (
 );
 
 const Protected = ({ admin = false }) => {
-  const { user, profile, loading, isAdmin } = useAuth();
+  const { user, profile, loading, isModerator } = useAuth();
   const { pathname } = useLocation();
   if (loading) return <PageLoader />;
   if (!user) return <Navigate to="/login" replace />;
   if (!profile?.onboarded && pathname !== "/onboarding") return <Navigate to="/onboarding" replace />;
-  if (admin && !isAdmin) return <NotFound />;
+  // Porte du panel admin : admin OU modérateur (les règles Firestore
+  // accordent déjà reports/jeux aux deux rôles).
+  if (admin && !isModerator) return <NotFound />;
   return <Outlet />;
 };
 

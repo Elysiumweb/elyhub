@@ -8,6 +8,7 @@ import { useCollection } from "@/hooks/useFirestore";
 import { TeamCard, ScrimCard, TournamentCard, PlayerCard, OfferCard, Avatar } from "@/components/common/Cards";
 import { EmptyState } from "@/components/common/States";
 import { slugToGameId } from "@/lib/constants";
+import { rankOfficial } from "@/lib/db";
 import NotFound from "./NotFound";
 
 const SECTION_MAP = {
@@ -55,7 +56,8 @@ export default function GameHub() {
   const baseData = section === "players" ? data.filter((p) => p.onboarded && p.visibility?.hideDirectory !== false)
     : section === "teams" ? [...data, ...multiTeams.data.filter((x) => !data.some((y) => y.id === x.id))]
       : data;
-  const list = baseData.slice(0, 24);
+  // Les contenus officiels (compte administrateur) remontent en tête de hub.
+  const list = rankOfficial(baseData).slice(0, 24);
 
   const renderCard = (item) => {
     switch (section) {

@@ -4,7 +4,7 @@ import { useCollection } from "@/hooks/useFirestore";
 import { useFilters } from "@/context/FiltersContext";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
-import { rankOfficial } from "@/lib/db";
+import { rankOfficial, isOfficialItem } from "@/lib/db";
 import { TeamCard, ScrimCard, TournamentCard, OfferCard } from "@/components/common/Cards";
 import { LftCard } from "@/pages/Lft";
 import { EmptyState, Skeletons } from "@/components/common/States";
@@ -31,7 +31,16 @@ export default function Home() {
   const lft = useCollection("lft");
 
   const pick = (col, extra = () => true, n = 3) => rankOfficial(apply(col.data).filter(extra)).slice(0, n);
-  const official = rankOfficial([...teams.data, ...scrims.data, ...tournaments.data, ...offers.data, ...lft.data].filter((x) => x.isOfficial && x.status !== "closed" && x.status !== "cancelled")).slice(0, 6);
+  const official = rankOfficial([...teams.data, ...scrims.data, ...tournaments.data, ...offers.data, ...lft.data].filter((x) => isOfficialItem(x) && x.status !== "closed" && x.status !== "cancelled")).slice(0, 6);
+  // Discrimine le type d'une annonce mixée (section officielle) sur des champs
+  // propres à chaque collection — `slots`/`format` seuls sont ambigus.
+  const renderOfficial = (x) => {
+    if (x.registeredTeamIds !== undefined || x.organizerId !== undefined) return <TournamentCard key={x.id} tournament={x} />;
+    if (x.playerId !== undefined) return <LftCard key={x.id} lft={x} />;
+    if (x.ownerIds !== undefined || (x.date !== undefined && x.teamName !== undefined)) return <ScrimCard key={x.id} scrim={x} />;
+    if (x.role !== undefined || x.teamId !== undefined) return <OfferCard key={x.id} offer={x} />;
+    return <TeamCard key={x.id} team={x} />;
+  };
 
   return (
     <div className="space-y-12">
@@ -65,7 +74,7 @@ export default function Home() {
           <img src="/brand/accent-brackets-gold.png" alt="" className="absolute right-4 top-4 h-8 opacity-60 pointer-events-none hidden sm:block" />
           <h2 className="section-title text-[#D8CA82]"><ShieldCheck className="h-3.5 w-3.5" />{t("official_announcements")}</h2>
           <div className="grid md:grid-cols-3 gap-3 stagger">
-            {official.map((x) => x.slots ? <TournamentCard key={x.id} tournament={x} /> : x.format ? <ScrimCard key={x.id} scrim={x} /> : x.playerId ? <LftCard key={x.id} lft={x} /> : x.role ? <OfferCard key={x.id} offer={x} /> : <TeamCard key={x.id} team={x} />)}
+            {official.map(renderOfficial)}
           </div>
         </section>
       )}

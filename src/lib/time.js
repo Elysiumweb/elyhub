@@ -1,6 +1,22 @@
 // Helpers temps : fuseaux horaires explicites, affichages relatifs, conversions.
 // Un scrim est stocké en "YYYY-MM-DDTHH:mm" (datetime-local) + champ `timezone` IANA.
 
+// Convertit n'importe quelle valeur « date » rencontrée en base (nombre epoch,
+// ISO string, Timestamp Firestore { seconds } ou objet toDate()) en millisecondes.
+// Renvoie null si la valeur est inexploitable — plus jamais de NaN/« [object
+// Object] » ni de crash (toISOString/localeCompare sur un objet non-Date).
+export const toEpoch = (v) => {
+  if (v == null || v === "") return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v === "object") {
+    if (typeof v.toMillis === "function") return v.toMillis(); // Timestamp Firestore
+    if (typeof v.seconds === "number") return v.seconds * 1000; // forme sérialisée
+    return null;
+  }
+  const d = new Date(v);
+  return isNaN(d) ? null : d.getTime();
+};
+
 export const browserTimezone = () => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -58,9 +74,9 @@ export const tzAbbr = (tz, date = new Date()) => {
 // Date relative : "dans 2 h", "demain", "il y a 3 j"… (clés i18n)
 export const relTime = (ts, t, nowTs = Date.now()) => {
   if (!ts) return "—";
-  const d = new Date(ts);
-  if (isNaN(d)) return String(ts);
-  const diff = d.getTime() - nowTs;
+  const ms = toEpoch(ts);
+  if (ms == null) return typeof ts === "string" ? ts : "—";
+  const diff = ms - nowTs;
   const abs = Math.abs(diff);
   const min = Math.round(abs / 60000);
   const h = Math.round(abs / 3600000);

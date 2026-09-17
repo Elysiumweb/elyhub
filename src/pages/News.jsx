@@ -30,7 +30,7 @@ const NewsCard = ({ n }) => {
 
 export default function News() {
   const { t } = useI18n();
-  const { isModerator, user } = useAuth();
+  const { isModerator, user, profile } = useAuth();
   const { data, loading } = useCollection("news", [limit(50)], []);
   const list = rankOfficial(data).filter((n) => n.status !== "draft");
   const [open, setOpen] = useState(false);
@@ -42,7 +42,7 @@ export default function News() {
     if (!f.title.trim()) return;
     setBusy(true);
     try {
-      await createNews({ title: f.title.trim(), excerpt: f.excerpt.trim(), body: f.body.trim() }, user.uid);
+      await createNews({ title: f.title.trim(), excerpt: f.excerpt.trim(), body: f.body.trim() }, user.uid, profile?.role);
       toast.success(t("saved"));
       setOpen(false);
       setF({ title: "", excerpt: "", body: "" });
