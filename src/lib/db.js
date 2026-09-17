@@ -6,7 +6,7 @@ import { db } from "./firebase";
 import { ADMIN_UID } from "./constants";
 import { applyMatchToElo, ELO_INITIAL } from "./elo";
 import { localToDate, toEpoch } from "./time";
-import { normalizeTeamGames, profileToPublic } from "./profile";
+import { asList, normalizeTeamGames, profileToPublic } from "./profile";
 
 export const now = () => Date.now();
 // Est « officiel » : le compte bootstrap (ADMIN_UID au build) OU tout compte
@@ -128,7 +128,7 @@ export const updateMemberRole = async (teamId, uid, role) => {
     const s = await tx.get(ref);
     if (!s.exists()) return;
     const team = s.data();
-    const members = (team.members || []).map((m) => (m.uid === uid ? { ...m, role } : m));
+    const members = asList(team.members).map((m) => (m?.uid === uid ? { ...m, role } : m));
     tx.update(ref, { members, updatedAt: now() });
   });
 };
@@ -140,9 +140,9 @@ export const transferCaptaincy = async (teamId, newOwnerUid) => {
     const s = await tx.get(ref);
     if (!s.exists()) throw new Error("team-not-found");
     const team = s.data();
-    const members = (team.members || []).map((m) => ({
+    const members = asList(team.members).map((m) => ({
       ...m,
-      role: m.uid === newOwnerUid ? "captain" : m.uid === team.ownerId && m.role === "captain" ? "starter" : m.role,
+      role: m?.uid === newOwnerUid ? "captain" : m?.uid === team.ownerId && m?.role === "captain" ? "starter" : m?.role,
     }));
     tx.update(ref, {
       ownerId: newOwnerUid,
@@ -190,7 +190,7 @@ export const findOrCreateConversation = async ({ me, other, teamId, teamName, ti
   const q = query(collection(db, "conversations"), where("participantIds", "array-contains", me.id));
   const snaps = await getDocs(q);
   const existing = snaps.docs.map(withId).find((c) =>
-    c.participantIds.includes(other.id) && (c.teamId || null) === (teamId || null) && (c.scrimId || null) === scrimId
+    asList(c.participantIds).includes(other.id) && (c.teamId || null) === (teamId || null) && (c.scrimId || null) === scrimId
   );
   if (existing) return existing.id;
   const ref = await addDoc(collection(db, "conversations"), {
@@ -258,7 +258,7 @@ export const submitScrimResult = async (scrim, scoreA, scoreB, byUid) => {
     }
   }
 
-  if (scrim.recurring && scrim.ownerIds?.[0] === byUid) {
+  if (scrim.recurring && asList(scrim.ownerIds)[0] === byUid) {
     const next = localToDate(scrim.date, scrim.timezone || "UTC");
     if (next) {
       const shifted = new Date(next.getTime() + 7 * 86400000);
@@ -296,8 +296,9 @@ export const registerTeamToTournament = async (tid, team) => {
     const s = await tx.get(ref);
     if (!s.exists()) throw new Error("tournament-not-found");
     const tr = s.data();
-    if ((tr.registeredTeamIds || []).includes(team.id)) return;
-    if ((tr.registeredTeamIds || []).length >= tr.slots) throw new Error("tournament-full");
+    const registered = asList(tr.registeredTeamIds);
+    if (registered.includes(team.id)) return;
+    if (registered.length >= (Number(tr.slots) || 0)) throw new Error("tournament-full");
     tx.update(ref, {
       registeredTeamIds: arrayUnion(team.id),
       registeredTeams: arrayUnion({ id: team.id, name: team.name, logo: team.logo || null, region: team.region || null, ownerId: team.ownerId, elo: team.elo ?? null }),
@@ -311,8 +312,8 @@ export const unregisterTeamFromTournament = async (tid, teamId) => {
     if (!s.exists()) return;
     const tr = s.data();
     tx.update(ref, {
-      registeredTeamIds: (tr.registeredTeamIds || []).filter((x) => x !== teamId),
-      registeredTeams: (tr.registeredTeams || []).filter((x) => x.id !== teamId),
+      registeredTeamIds: asList(tr.registeredTeamIds).filter((x) => x !== teamId),
+      registeredTeams: asList(tr.registeredTeams).filter((x) => x?.id !== teamId),
     });
   });
 };
@@ -444,7 +445,7 @@ export const deleteAlert = (id) => deleteDoc(doc(db, "alerts", id));
 export const toggleFavorite = async (profile, kind, id) => {
   if (!profile) return null;
   const key = `fav_${kind}`;
-  const list = profile[key] || [];
+  const list = asList(profile[key]);
   const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
   await saveProfile(profile.id, { [key]: next });
   return next;

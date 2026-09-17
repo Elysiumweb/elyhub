@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
 import { useGames } from "@/hooks/useGames";
 import { createLft, updateLft, findOrCreateConversation, isOfficialItem } from "@/lib/db";
+import { asList } from "@/lib/profile";
 import { REGIONS } from "@/lib/constants";
 import { Field, PageTitle } from "@/components/common/States";
 import { GameSelector } from "@/components/common/GameSelector";
@@ -41,7 +42,7 @@ export const LftCard = ({ lft }) => {
           <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-zinc-400">
             <GameBadge game={g} />
             {lft.rank && <span className="badge border-white/10 text-zinc-300">{lft.rank}</span>}
-            {(lft.roles || []).map((r) => <span key={r} className="badge bg-[#D8CA82]/10 text-[#D8CA82] border-[#D8CA82]/30">{r}</span>)}
+            {asList(lft.roles).map((r, i) => <span key={i} className="badge bg-[#D8CA82]/10 text-[#D8CA82] border-[#D8CA82]/30">{String(r)}</span>)}
             <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{lft.region}</span>
             {lft.availability && <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{lft.availability}</span>}
           </div>

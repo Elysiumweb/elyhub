@@ -8,7 +8,7 @@ import { useGames } from "@/hooks/useGames";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
 import { findOrCreateConversation, rankOfficial } from "@/lib/db";
-import { teamGames, hasSchedule } from "@/lib/profile";
+import { teamGames, hasSchedule, asList } from "@/lib/profile";
 import { WEEKDAYS } from "@/lib/constants";
 import { Avatar, OfferCard } from "@/components/common/Cards";
 import { GameBadge, OfficialBadge } from "@/components/common/Badges";
@@ -39,7 +39,7 @@ export default function TeamDetail() {
   const contact = async () => {
     setBusy(true);
     try {
-      const owner = team.members?.find((m) => m.uid === team.ownerId) || { uid: team.ownerId, pseudo: team.name };
+      const owner = asList(team.members).find((m) => m.uid === team.ownerId) || { uid: team.ownerId, pseudo: team.name };
       const cid = await findOrCreateConversation({ me: profile, other: { id: team.ownerId, pseudo: owner.pseudo, avatar: team.logo }, teamId: team.id, teamName: team.name, title: team.name });
       nav(`/messages/${cid}`);
     } catch { toast.error(t("err_generic")); } finally { setBusy(false); }
@@ -61,8 +61,8 @@ export default function TeamDetail() {
               <GameBadge game={g} size="lg" />
               {games.slice(1).map((gid) => <GameBadge key={gid} game={getGame(gid)} />)}
               <span className="badge border-white/10 text-zinc-300"><MapPin className="h-3 w-3" />{team.region}</span>
-              <span className="badge border-white/10 text-zinc-300"><Users className="h-3 w-3" />{team.memberIds?.length || 0} {t("members")}</span>
-              {(team.languages || []).map((l) => <span key={l} className="badge border-white/10 text-zinc-400">{t(`lang_${l}`)}</span>)}
+              <span className="badge border-white/10 text-zinc-300"><Users className="h-3 w-3" />{asList(team.memberIds).length} {t("members")}</span>
+              {asList(team.languages).map((l, i) => <span key={i} className="badge border-white/10 text-zinc-400">{t(`lang_${l}`)}</span>)}
             </div>
             {team.description && <p className="mt-4 text-sm text-zinc-300 max-w-2xl whitespace-pre-line">{team.description}</p>}
           </div>
@@ -81,8 +81,8 @@ export default function TeamDetail() {
           <div>
             <h2 className="section-title"><Users className="h-3.5 w-3.5" />{t("roster")}</h2>
             <div className="grid sm:grid-cols-2 gap-2" data-testid="team-roster">
-              {(team.members || []).map((m) => (
-                <Link key={m.uid} to={`/players/${m.uid}`} data-testid={`roster-member-${m.uid}`} className="card-elysium p-3 flex items-center gap-3">
+              {asList(team.members).map((m, i) => (
+                <Link key={m.uid || i} to={`/players/${m.uid}`} data-testid={`roster-member-${m.uid}`} className="card-elysium p-3 flex items-center gap-3">
                   <Avatar src={m.avatar} name={m.pseudo} round />
                   <div className="min-w-0"><div className="text-sm font-semibold text-white truncate">{m.pseudo}</div><div className="text-[10px] uppercase tracking-wider text-[#D8CA82]">{m.role || t("player")}{m.uid === team.ownerId && " · " + t("captain")}</div></div>
                 </Link>
@@ -124,9 +124,9 @@ export default function TeamDetail() {
           )}
           <div>
             <h2 className="section-title"><Trophy className="h-3.5 w-3.5" />{t("palmares")}</h2>
-            {team.palmares?.length ? (
+            {asList(team.palmares).length ? (
               <ol className="relative border-l border-[#D8CA82]/30 ml-2 space-y-4" data-testid="team-palmares">
-                {team.palmares.map((p, i) => (
+                {asList(team.palmares).map((p, i) => (
                   <li key={i} className="pl-4 relative"><span className="absolute -left-[5px] top-1.5 h-2 w-2 bg-[#D8CA82]" />
                     <div className="text-sm font-semibold text-white">{p.title}</div>
                     <div className="text-xs text-zinc-400">{p.place}{p.date && ` · ${formatDate(p.date)}`}</div></li>

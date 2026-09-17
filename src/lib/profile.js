@@ -1,13 +1,32 @@
 import { isMinorRange } from "./constants";
 
+// ─────────────────────────── Tolérance aux données legacy ─────────────────
+// Les documents écrits par les anciennes versions de l'app (ou modifiés à la
+// main dans la console) peuvent porter des champs au mauvais format : une
+// chaîne « fr,en » à la place d'un tableau, un objet à la place d'un tableau,
+// etc. Appeler .map()/.filter()/.includes() sur ces valeurs faisait crasher le
+// rendu avec des erreurs minifiées du type « o.map is not a function » /
+// « o is not a function ». Ces helpers normalisent SANS jamais jeter : tout
+// champ de document Firestore lu pour l'affichage doit passer par eux.
+export const asList = (v) => {
+  if (Array.isArray(v)) return v.filter((x) => x !== null && x !== undefined);
+  if (typeof v === "string") return v.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean);
+  if (v && typeof v === "object") return Object.values(v).filter((x) => x !== null && x !== undefined);
+  return [];
+};
+export const asMap = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
+export const asString = (v) => (v === null || v === undefined ? "" : typeof v === "string" ? v : String(v));
+// Tableau de chaînes uniquement (les entrées non-string sont converties).
+export const asStringList = (v) => asList(v).map(asString).filter(Boolean);
+
 // ─────────────────────────── Équipes multi-jeux ───────────────────────────
 // Une équipe joue à un ou plusieurs jeux. `gameId` reste le jeu PRINCIPAL
 // (compatible avec les données existantes et les requêtes serveur), `gameIds`
 // liste tous les jeux. Les équipes créées avant la migration n'ont que `gameId`.
 export const teamGames = (team) => {
   if (!team) return [];
-  if (Array.isArray(team.gameIds) && team.gameIds.length) return team.gameIds;
-  return team.gameId ? [team.gameId] : [];
+  const ids = asStringList(team.gameIds);
+  return ids.length ? ids : team.gameId ? [team.gameId] : [];
 };
 
 // Normalise un patch de création/mise à jour d'équipe : garantit que
@@ -58,14 +77,23 @@ export const buildSchedule = ({ days = [], from = "", to = "" } = {}) => {
 // Reconstitue l'état UI (days/from/to) à partir du tableau stocké.
 // Tolérance aux données legacy : un champ malformé (map au lieu de list,
 // chaîne…) ne doit jamais faire crasher le rendu (« o.map is not a function »).
-export const scheduleToForm = (schedule = []) => {
-  const list = Array.isArray(schedule) ? schedule : [];
-  const first = list[0];
-  return {
-    days: list.map((s) => s?.day).filter(Boolean),
-    from: first?.from || "",
-    to: first?.to || "",
-  };
+// Deux formes tolérées : [{ day, from, to }] OU { mon: { from, to }, … }.
+export const scheduleToForm = (schedule) => {
+  if (Array.isArray(schedule)) {
+    const list = schedule.filter((s) => s && typeof s === "object");
+    const first = list[0];
+    return {
+      days: list.map((s) => s.day).filter(Boolean),
+      from: first?.from || "",
+      to: first?.to || "",
+    };
+  }
+  if (schedule && typeof schedule === "object") {
+    const days = Object.keys(schedule);
+    const first = Object.values(schedule)[0] || {};
+    return { days, from: first.from || "", to: first.to || "" };
+  }
+  return { days: [], from: "", to: "" };
 };
 
 export const hasSchedule = (schedule = []) =>
@@ -76,31 +104,33 @@ const cleanMap = (m = {}) =>
 
 // État formulaire → données stockées (users/{uid}). Les valeurs vides sont
 // purgées pour ne pas encombrer le document (règles : ≤ 60 champs).
+// Normalisation défensive : un champ legacy malformé (string au lieu de list,
+// number au lieu de string…) est converti plutôt que de faire crasher l'écriture.
 export const buildProfileSave = (f = {}, user = {}, existing = {}) => {
-  const gameHandles = cleanMap(f.gameHandles);
-  const socials = cleanMap(f.socials);
-  const ranksByGame = cleanMap(f.ranksByGame);
-  const vodLink = (f.vodLink || "").trim();
+  const gameHandles = cleanMap(asMap(f.gameHandles));
+  const socials = cleanMap(asMap(f.socials));
+  const ranksByGame = cleanMap(asMap(f.ranksByGame));
+  const vodLink = asString(f.vodLink).trim();
   return {
-    pseudo: (f.pseudo || "").trim(),
+    pseudo: asString(f.pseudo).trim(),
     avatar: f.avatar || null,
-    games: Array.isArray(f.games) ? f.games : [],
-    roles: typeof f.roles === "string" ? f.roles.split(",").map((s) => s.trim()).filter(Boolean) : f.roles || [],
+    games: asStringList(f.games),
+    roles: asStringList(f.roles),
     region: f.region || "EU",
-    languages: Array.isArray(f.languages) ? f.languages : [],
-    bio: (f.bio || "").trim() || null,
+    languages: asStringList(f.languages),
+    bio: asString(f.bio).trim() || null,
     ranksByGame: Object.keys(ranksByGame).length ? ranksByGame : null,
     level: f.level || null,
     ageRange: f.ageRange || null,
     country: f.country || null,
-    city: (f.city || "").trim() || null,
+    city: asString(f.city).trim() || null,
     timezone: f.timezone || "UTC",
     availabilitySchedule: buildSchedule(f.schedule),
     gameHandles: Object.keys(gameHandles).length ? gameHandles : null,
     socials: Object.keys(socials).length ? socials : null,
     vodLink: vodLink || null,
     verified: isVerified({ verified: undefined, gameHandles }),
-    visibility: { public: true, hideDirectory: false, hideRank: false, ...(f.visibility || {}) },
+    visibility: { public: true, hideDirectory: false, hideRank: false, ...asMap(f.visibility) },
     email: user.email || existing?.email || null,
     onboarded: true,
     createdAt: existing?.createdAt || Date.now(),

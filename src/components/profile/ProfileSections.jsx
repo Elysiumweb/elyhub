@@ -6,7 +6,7 @@ import {
   GAME_HANDLES, SOCIAL_PLATFORMS, isMinorRange,
 } from "@/lib/constants";
 import { browserTimezone } from "@/lib/time";
-import { scheduleToForm } from "@/lib/profile";
+import { asList, asMap, asString, scheduleToForm } from "@/lib/profile";
 import { Field } from "@/components/common/States";
 import { GameSelector } from "@/components/common/GameSelector";
 import { RankSelect } from "@/components/common/RankSelect";
@@ -24,7 +24,9 @@ const chip = (on) =>
 export const IdentityFields = ({ f, patch, testPrefix = "profile" }) => {
   const { t } = useI18n();
   const set = (k) => (e) => patch({ [k]: e.target.value });
-  const toggleLang = (l) => patch({ languages: f.languages.includes(l) ? f.languages.filter((x) => x !== l) : [...f.languages, l] });
+  // asList : tolérance si un état non normalisé (document legacy) arrive ici.
+  const langs = asList(f.languages);
+  const toggleLang = (l) => patch({ languages: langs.includes(l) ? langs.filter((x) => x !== l) : [...langs, l] });
   return (
     <div className="space-y-6" data-testid={`${testPrefix}-identity`}>
       <div className="grid md:grid-cols-2 gap-6">
@@ -43,7 +45,7 @@ export const IdentityFields = ({ f, patch, testPrefix = "profile" }) => {
       <Field label={t("languages")}>
         <div className="flex flex-wrap gap-2">
           {LANGUAGES.map((l) => (
-            <button type="button" key={l} data-testid={`${testPrefix}-lang-${l}`} onClick={() => toggleLang(l)} className={chip(f.languages.includes(l))}>{t(`lang_${l}`)}</button>
+            <button type="button" key={l} data-testid={`${testPrefix}-lang-${l}`} onClick={() => toggleLang(l)} className={chip(langs.includes(l))}>{t(`lang_${l}`)}</button>
           ))}
         </div>
       </Field>
@@ -133,7 +135,8 @@ export const ContextFields = ({ f, patch, testPrefix = "profile" }) => {
 
 export const AvailabilityFields = ({ f, patch, testPrefix = "profile" }) => {
   const { t } = useI18n();
-  const s = f.schedule || { days: [], from: "", to: "" };
+  const raw = f.schedule && typeof f.schedule === "object" ? f.schedule : {};
+  const s = { days: asList(raw.days), from: raw.from || "", to: raw.to || "" };
   const setS = (obj) => patch({ schedule: { ...s, ...obj } });
   const toggleDay = (d) => setS({ days: s.days.includes(d) ? s.days.filter((x) => x !== d) : [...s.days, d] });
   return (
@@ -215,19 +218,32 @@ export const emptyProfileForm = (initial = {}) => ({
 });
 
 // État formulaire ← document profil Firestore (rôles list → chaîne,
-// availabilitySchedule list → créneau UI, etc.)
+// availabilitySchedule list → créneau UI, etc.).
+// ⚠️ Champ par champ (pas de spread brut du document) : un document legacy
+// malformé (ex. `languages` stocké en chaîne "fr,en") ne doit JAMAIS filer
+// dans l'état du formulaire — `.filter`/`.includes` sur une chaîne faisait
+// crasher le rendu (« o is not a function » en prod minifiée).
 export const formFromProfile = (p) => {
   if (!p) return emptyProfileForm();
   return {
     ...emptyProfileForm(),
-    ...Object.fromEntries(Object.entries(p).filter(([, v]) => v !== null && v !== undefined)),
-    roles: Array.isArray(p.roles) ? p.roles.join(", ") : p.roles || "",
-    games: p.games || [],
-    ranksByGame: p.ranksByGame || {},
-    gameHandles: p.gameHandles || {},
-    socials: p.socials || {},
+    pseudo: asString(p.pseudo),
+    avatar: p.avatar || null,
+    games: asList(p.games),
+    roles: typeof p.roles === "string" ? p.roles : asList(p.roles).join(", "),
+    region: p.region || "EU",
+    languages: asList(p.languages),
+    bio: asString(p.bio),
+    ranksByGame: asMap(p.ranksByGame),
+    level: p.level || "",
+    ageRange: p.ageRange || "",
+    country: p.country || "",
+    city: asString(p.city),
     timezone: p.timezone || browserTimezone(),
     schedule: scheduleToForm(p.availabilitySchedule),
-    visibility: { public: true, hideDirectory: false, hideRank: false, ...(p.visibility || {}) },
+    gameHandles: asMap(p.gameHandles),
+    socials: asMap(p.socials),
+    vodLink: asString(p.vodLink),
+    visibility: { public: true, hideDirectory: false, hideRank: false, ...asMap(p.visibility) },
   };
 };

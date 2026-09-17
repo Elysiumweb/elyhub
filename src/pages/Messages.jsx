@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
 import { useCollection, useDocument } from "@/hooks/useFirestore";
 import { sendMessage, toggleBlock, reportConversation } from "@/lib/db";
-import { isMinorProfile } from "@/lib/profile";
+import { asList, isMinorProfile } from "@/lib/profile";
 import { Avatar } from "@/components/common/Cards";
 import { EmptyState, Skeletons } from "@/components/common/States";
 
@@ -17,11 +17,13 @@ const Thread = ({ conv, me }) => {
   const endRef = useRef();
   const msgs = useCollection(`conversations/${conv.id}/messages`, [orderBy("createdAt", "asc")], [conv.id]);
   useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [msgs.data.length]);
-  const otherId = conv.participantIds.find((p) => p !== me.id);
+  const participants = asList(conv.participantIds);
+  const otherId = participants.find((p) => p !== me.id);
   const other = conv.participants?.[otherId] || { name: "?" };
-  const others = conv.participantIds.filter((p) => p !== me.id).map((p) => conv.participants?.[p]?.name).filter(Boolean);
-  const blockedByMe = conv.blockedBy?.includes(me.id);
-  const blocked = (conv.blockedBy || []).length > 0;
+  const others = participants.filter((p) => p !== me.id).map((p) => conv.participants?.[p]?.name).filter(Boolean);
+  const blockedBy = asList(conv.blockedBy);
+  const blockedByMe = blockedBy.includes(me.id);
+  const blocked = blockedBy.length > 0;
   // Protection des mineurs : messagerie directe restreinte quand l'autre
   // participant a déclaré un âge mineur (profils publics).
   const isDirectPlayer = !conv.teamId && conv.type !== "match";
@@ -91,7 +93,7 @@ export default function Messages() {
       <aside className={`border-r border-white/10 overflow-y-auto ${id ? "hidden md:block" : ""}`}>
         <div className="p-3 border-b border-white/10 flex items-center gap-2"><MessageSquare className="h-4 w-4 text-[#D8CA82]" /><span className="font-display text-xs uppercase tracking-widest">{t("nav_messages")}</span><span className="ml-auto text-xs text-zinc-500">{convs.length}</span></div>
         {loading ? <div className="p-3"><Skeletons n={4} className="h-14" /></div> : convs.length === 0 ? <div className="p-3"><EmptyState title={t("no_conversations")} description={t("no_conversations_desc")} action={t("browse_teams")} to="/teams" testId="empty-conversations" /></div> : convs.map((c) => {
-          const otherId = c.participantIds.find((p) => p !== profile.id);
+          const otherId = asList(c.participantIds).find((p) => p !== profile.id);
           const other = c.participants?.[otherId] || { name: "?" };
           return (
             <Link key={c.id} to={`/messages/${c.id}`} data-testid={`conversation-item-${c.id}`} className={`flex items-center gap-3 p-3 border-b border-white/5 hover:bg-white/5 transition-colors ${c.id === id ? "bg-[#D8CA82]/10 border-l-2 border-l-[#D8CA82]" : ""}`}>

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
 import { createTeam } from "@/lib/db";
+import { asList } from "@/lib/profile";
 import { REGIONS, LANGUAGES } from "@/lib/constants";
 import { Field, PageTitle } from "@/components/common/States";
 import { GameSelector } from "@/components/common/GameSelector";
@@ -13,7 +14,7 @@ export default function TeamCreate() {
   const { user, profile } = useAuth();
   const { t } = useI18n();
   const nav = useNavigate();
-  const [f, setF] = useState({ name: "", gameIds: [], region: profile?.region || "EU", logo: null, description: "", languages: profile?.languages || ["fr"] });
+  const [f, setF] = useState({ name: "", gameIds: [], region: profile?.region || "EU", logo: null, description: "", languages: asList(profile?.languages).length ? asList(profile?.languages) : ["fr"] });
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 

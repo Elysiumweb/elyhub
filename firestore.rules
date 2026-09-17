@@ -40,11 +40,16 @@ service cloud.firestore {
 
     // ─────────────────────────────────────────────────────────────
     // Utilisateurs : document privé. Données publiques dans `profiles`.
+    // La lecture de la collection (list) est réservée à la modération :
+    // c'est elle qui alimente l'onglet « Utilisateurs » du panel admin.
+    // Un admin peut modifier les comptes des autres (rôle, bannissement) ;
+    // un utilisateur ne peut JAMAIS modifier son propre rôle (noEscalation).
     // ─────────────────────────────────────────────────────────────
     match /users/{uid} {
       allow get: if isSelf(uid) || isMod();
+      allow list: if isMod();
       allow create: if isSelf(uid) && request.resource.data.onboarded is bool;
-      allow update: if isSelf(uid) && noEscalation('role') && docIsSmall();
+      allow update: if (isSelf(uid) && noEscalation('role') && docIsSmall()) || (isAdmin() && docIsSmall());
       allow delete: if isSelf(uid) || isAdmin();
     }
 

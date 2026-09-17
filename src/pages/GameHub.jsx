@@ -9,6 +9,7 @@ import { TeamCard, ScrimCard, TournamentCard, PlayerCard, OfferCard, Avatar } fr
 import { EmptyState } from "@/components/common/States";
 import { slugToGameId } from "@/lib/constants";
 import { rankOfficial } from "@/lib/db";
+import { asList } from "@/lib/profile";
 import NotFound from "./NotFound";
 
 const SECTION_MAP = {
@@ -53,7 +54,9 @@ export default function GameHub() {
   if (game.id !== gameId) return <Navigate to={`/${slug}`} replace />;
 
   const [titleKey, allKey, base] = TITLES[section];
-  const baseData = section === "players" ? data.filter((p) => p.onboarded && p.visibility?.hideDirectory !== false)
+  // `hideDirectory !== true` : un profil n'est masqué que s'il l'a demandé
+  // explicitement (les profils écrits par l'app ont `hideDirectory: false`).
+  const baseData = section === "players" ? data.filter((p) => p.onboarded && p.visibility?.hideDirectory !== true)
     : section === "teams" ? [...data, ...multiTeams.data.filter((x) => !data.some((y) => y.id === x.id))]
       : data;
   // Les contenus officiels (compte administrateur) remontent en tête de hub.
@@ -74,7 +77,7 @@ export default function GameHub() {
               <h3 className="font-display text-sm uppercase text-white truncate">{item.playerPseudo}</h3>
               <div className="mt-1 flex flex-wrap gap-1.5 text-xs text-zinc-400">
                 <span className="badge border-white/10 text-zinc-300">{item.rank || t("all_ranks")}</span>
-                <span className="inline-flex items-center gap-1"><UserSearch className="h-3 w-3" />{item.roles?.join(", ") || t("lft_short")}</span>
+                <span className="inline-flex items-center gap-1"><UserSearch className="h-3 w-3" />{asList(item.roles).join(", ") || t("lft_short")}</span>
               </div>
             </div>
           </Link>
