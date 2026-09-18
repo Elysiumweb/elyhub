@@ -7,6 +7,10 @@ export const __seed = (docs) => {
 };
 export const __store = STORE;
 
+// Journal des abonnements onSnapshot : [path, constraints] — permet de vérifier
+// QUELLES requêtes une page lance (ex. le filtre `where` d'une collection privée).
+export const __subs = [];
+
 const colDocs = (colPath) =>
   Object.entries(STORE)
     .filter(([p]) => p.startsWith(`${colPath}/`) && p.slice(colPath.length + 1).split("/").length === 1)
@@ -64,6 +68,7 @@ const snapFor = (target) => {
 };
 
 export const onSnapshot = (target, next, onError) => {
+  __subs.push({ path: target.path, constraints: target.constraints });
   try {
     next(snapFor(target));
   } catch (e) {

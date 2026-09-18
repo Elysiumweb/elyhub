@@ -18,7 +18,12 @@ export function useCollection(path, constraints = [], deps = [], enabled = isFir
     const unsub = onSnapshot(q, (snap) => { setData(snap.docs.map(withId)); setLoading(false); },
       // eslint-disable-next-line no-console
       (e) => { console.error(path, e); setError(e); setLoading(false); });
-    return unsub;
+    // Cleanup toujours une fonction sous notre contrôle : même si onSnapshot
+    // renvoyait un jour autre chose, React ne devrait jamais invoquer une
+    // valeur non-fonction comme cleanup (crash « o is not a function »).
+    return () => {
+      if (typeof unsub === "function") unsub();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, enabled, nonce, ...deps]);
   return { data, loading, error, reload: () => setNonce((n) => n + 1) };
@@ -36,7 +41,10 @@ export function useDocument(path, id, enabled = isFirebaseConfigured) {
     const unsub = onSnapshot(doc(db, path, id), (snap) => { setData(snap.exists() ? withId(snap) : null); setLoading(false); },
       // eslint-disable-next-line no-console
       (e) => { console.error(path, e); setError(e); setLoading(false); });
-    return unsub;
+    // Idem useCollection : le cleanup reste une fonction sous notre contrôle.
+    return () => {
+      if (typeof unsub === "function") unsub();
+    };
   }, [path, id, enabled, nonce]);
   return { data, loading, error, reload: () => setNonce((n) => n + 1) };
 }

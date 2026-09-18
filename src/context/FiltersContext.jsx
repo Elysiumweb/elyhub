@@ -14,7 +14,11 @@ export function FiltersProvider({ children }) {
       return { region: "", language: "", gameId: "", country: "" };
     }
   });
-  useEffect(() => localStorage.setItem(KEY, JSON.stringify(filters)), [filters]);
+  useEffect(() => {
+    // Corps de bloc : ne jamais renvoyer la valeur d'une API tiers comme
+    // cleanup (React 19 l'invoquerait tel quel si ce n'est pas une fonction).
+    localStorage.setItem(KEY, JSON.stringify(filters));
+  }, [filters]);
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }));
   const reset = () => setFilters({ region: "", language: "", gameId: "", country: "" });
 

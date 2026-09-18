@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { limit } from "firebase/firestore";
+import { limit, where } from "firebase/firestore";
 import { MessageSquare, LogOut, User, LayoutDashboard, ShieldCheck, Menu, Search } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
@@ -25,7 +25,11 @@ export const Navbar = () => {
   const [open, setOpen] = useState(false);
 
   // Badge de messages non lus : compteur `unread` par participant (lastAt > lastReadAt[moi]).
-  const convs = useCollection("conversations", [limit(100)], [], !!user);
+  // Filtre par participant OBLIGATOIRE : les règles Firestore refusent le list
+  // d'une conversation dont l'utilisateur n'est pas participant — sans filtre,
+  // la requête entière était rejetée (« Missing or insufficient permissions »
+  // sur chaque page).
+  const convs = useCollection("conversations", [where("participantIds", "array-contains", user?.uid || "-"), limit(100)], [user?.uid], !!user);
   const unread = convs.data.filter((c) => (c.lastAt || 0) > (c.lastReadAt?.[user?.uid] || 0) && c.lastSenderId !== user?.uid).length;
 
   const NavItems = ({ onClick }) => (

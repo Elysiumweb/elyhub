@@ -16,7 +16,12 @@ const Thread = ({ conv, me }) => {
   const [text, setText] = useState("");
   const endRef = useRef();
   const msgs = useCollection(`conversations/${conv.id}/messages`, [orderBy("createdAt", "asc")], [conv.id]);
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [msgs.data.length]);
+  // Corps de bloc : renvoyer la valeur de scrollIntoView() comme cleanup
+  // cassait la page si un polyfill/extension la faisait renvoyer autre chose
+  // qu'une fonction (React 19 l'invoque tel quel → « o is not a function »).
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [msgs.data.length]);
   const participants = asList(conv.participantIds);
   const otherId = participants.find((p) => p !== me.id);
   const other = conv.participants?.[otherId] || { name: "?" };
