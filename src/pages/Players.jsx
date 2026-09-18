@@ -10,7 +10,7 @@ import { useFilters } from "@/context/FiltersContext";
 import { useI18n } from "@/i18n";
 import { findOrCreateConversation, rankOfficial } from "@/lib/db";
 import { slugToGameId, LEVELS, WEEKDAYS, GAME_HANDLES, SOCIAL_PLATFORMS, countryLabel } from "@/lib/constants";
-import { teamGames, isMinorProfile, isVerified } from "@/lib/profile";
+import { asList, asMap, teamGames, isMinorProfile, isVerified } from "@/lib/profile";
 import { LftCard } from "./Lft";
 import { Avatar, PlayerCard } from "@/components/common/Cards";
 import { GameBadge, VerifiedBadge, LevelBadge, MinorBadge } from "@/components/common/Badges";
@@ -35,12 +35,15 @@ export function Players() {
   const gameId = urlGame || filters.gameId;
   // Annuaire trié « officiel d'abord » : la fiche du compte administrateur
   // (et de tout contenu officiel) remonte tout en haut.
+  // ⚠️ `hideDirectory !== true` (et non `!== false`) : les profils écrits par
+  // l'app ont `hideDirectory: false` — l'ancienne condition inverse les
+  // masquait TOUS de l'annuaire (fiche admin incluse).
   const list = rankOfficial(apply(data.filter((p) => p.onboarded
       && p.visibility?.public !== false
-      && p.visibility?.hideDirectory !== false
+      && p.visibility?.hideDirectory !== true
       && (!q || (p.pseudo || "").toLowerCase().includes(q.toLowerCase()))
       && (!level || p.level === level)), { gameKey: "__none__" })
-    .filter((p) => !gameId || (p.games || []).includes(gameId)));
+    .filter((p) => !gameId || asList(p.games).includes(gameId)));
   const lftList = rankOfficial(apply(lft.data, undefined, { gameId: urlGame || undefined })).filter((x) => x.status === "open" && (!q || x.playerPseudo?.toLowerCase().includes(q.toLowerCase())));
   return (
     <div>
@@ -130,8 +133,8 @@ export default function PlayerProfile() {
   const minor = isMinorProfile(p);
   const verified = isVerified(p);
   const location = [p.country ? countryLabel(p.country) : null, p.city || null].filter(Boolean).join(" · ");
-  const handles = Object.entries(p.gameHandles || {}).filter(([, v]) => v);
-  const socials = Object.entries(p.socials || {}).filter(([, v]) => v);
+  const handles = Object.entries(asMap(p.gameHandles)).filter(([, v]) => v);
+  const socials = Object.entries(asMap(p.socials)).filter(([, v]) => v);
 
   return (
     <div className="space-y-8" data-testid="player-profile-page">
@@ -148,14 +151,14 @@ export default function PlayerProfile() {
           </h1>
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="badge border-white/10 text-zinc-300"><MapPin className="h-3 w-3" />{p.region}{location && ` · ${location}`}</span>
-            {(p.languages || []).map((l) => <span key={l} className="badge border-white/10 text-zinc-300"><Languages className="h-3 w-3" />{t(`lang_${l}`)}</span>)}
-            {(p.roles || []).map((r) => <span key={r} className="badge bg-[#D8CA82]/10 text-[#D8CA82] border-[#D8CA82]/30">{r}</span>)}
+            {asList(p.languages).map((l) => <span key={l} className="badge border-white/10 text-zinc-300"><Languages className="h-3 w-3" />{t(`lang_${l}`)}</span>)}
+            {asList(p.roles).map((r, i) => <span key={i} className="badge bg-[#D8CA82]/10 text-[#D8CA82] border-[#D8CA82]/30">{String(r)}</span>)}
           </div>
           <div className="mt-3 flex flex-wrap gap-2" data-testid="player-games">
-            {(p.games || []).map((gid) => (
+            {asList(p.games).map((gid) => (
               <span key={gid} className="flex items-center gap-1.5 border border-white/10 pl-1.5 pr-2 py-1">
                 <GameBadge game={getGame(gid)} />
-                {p.ranksByGame?.[gid] && !hideRank && <span data-testid={`player-rank-${gid}`} className="text-xs text-zinc-300">{p.ranksByGame[gid]}</span>}
+                {asMap(p.ranksByGame)[gid] && !hideRank && <span data-testid={`player-rank-${gid}`} className="text-xs text-zinc-300">{String(asMap(p.ranksByGame)[gid])}</span>}
               </span>
             ))}
           </div>

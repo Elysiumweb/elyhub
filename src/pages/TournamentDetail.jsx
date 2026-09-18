@@ -8,7 +8,7 @@ import { useI18n } from "@/i18n";
 import { useCollection, useDocument } from "@/hooks/useFirestore";
 import { useGames } from "@/hooks/useGames";
 import { registerTeamToTournament, startTournament, addMatches, finishTournament } from "@/lib/db";
-import { teamGames } from "@/lib/profile";
+import { asList, teamGames } from "@/lib/profile";
 import { generateSingleElim, generateRoundRobin, generateSwissRound, shuffle, standings } from "@/lib/bracket";
 import { Avatar } from "@/components/common/Cards";
 import { GameBadge, OfficialBadge, StatusBadge } from "@/components/common/Badges";
@@ -38,12 +38,16 @@ export default function TournamentDetail() {
   if (loading) return <Skeletons n={2} />;
   if (!tr) return <NotFound />;
   const g = getGame(tr.gameId);
-  const left = tr.slots - (tr.registeredTeamIds?.length || 0);
+  // Normalisation : un tournoi legacy peut manquer de champs ou les avoir au
+  // mauvais format — jamais de .map/.includes sur une valeur non-liste.
+  const registeredIds = asList(tr.registeredTeamIds);
+  const registeredTeams = asList(tr.registeredTeams);
+  const left = (Number(tr.slots) || 0) - registeredIds.length;
   const status = tr.status === "finished" ? "finished" : tr.status === "ongoing" ? "ongoing" : left <= 0 ? "full" : "registration";
   const isOrg = user?.uid === tr.organizerId;
   // Équipes multi-jeux : éligible si le jeu du tournoi fait partie de ses jeux.
-  const eligible = myTeams.data.filter((x) => teamGames(x).includes(tr.gameId) && !tr.registeredTeamIds?.includes(x.id));
-  const alreadyIn = memberTeams.data.filter((x) => tr.registeredTeamIds?.includes(x.id));
+  const eligible = myTeams.data.filter((x) => teamGames(x).includes(tr.gameId) && !registeredIds.includes(x.id));
+  const alreadyIn = memberTeams.data.filter((x) => registeredIds.includes(x.id));
   const hasAnyTeam = memberTeams.data.length > 0;
   const liveMatch = activeMatch ? matches.data.find((m) => m.id === activeMatch.id) || activeMatch : null;
   const disputes = matches.data.filter((m) => m.status === "disputed");
@@ -52,14 +56,14 @@ export default function TournamentDetail() {
 
   const register = () => run(async () => { const team = eligible.find((x) => x.id === (pick || eligible[0]?.id)); if (!team) return; await registerTeamToTournament(tr.id, team); setOpen(false); }, t("team_registered"));
   const start = () => run(async () => {
-    const teams = shuffle(tr.registeredTeams);
+    const teams = shuffle(registeredTeams);
     const gen = tr.format === "single_elim" ? generateSingleElim(tr.id, teams) : tr.format === "round_robin" ? generateRoundRobin(tr.id, teams) : (() => { const r = generateSwissRound(tr.id, teams, []); return { matches: r.matches, rounds: 1 }; })();
     await startTournament(tr, gen.matches, gen.rounds);
     setParams({ tab: "bracket" });
   }, t("tournament_started"));
-  const nextSwiss = () => run(async () => { const r = generateSwissRound(tr.id, tr.registeredTeams, matches.data); await addMatches(tr, r.matches, r.round); }, t("round_generated"));
+  const nextSwiss = () => run(async () => { const r = generateSwissRound(tr.id, registeredTeams, matches.data); await addMatches(tr, r.matches, r.round); }, t("round_generated"));
   const finish = () => run(async () => {
-    const winner = tr.format === "single_elim" ? (() => { const f = matches.data.find((m) => m.round === tr.rounds); return [f?.teamA, f?.teamB].find((x) => x?.id === f?.winnerId) || null; })() : (() => { const s = standings(tr.registeredTeams, matches.data).table[0]; return s ? { id: s.id, name: s.name, logo: s.logo || null } : null; })();
+    const winner = tr.format === "single_elim" ? (() => { const f = matches.data.find((m) => m.round === tr.rounds); return [f?.teamA, f?.teamB].find((x) => x?.id === f?.winnerId) || null; })() : (() => { const s = standings(registeredTeams, matches.data).table[0]; return s ? { id: s.id, name: s.name, logo: s.logo || null } : null; })();
     await finishTournament(tr.id, winner);
   }, t("tournament_finished"));
 
@@ -109,8 +113,8 @@ export default function TournamentDetail() {
             <div className="card-elysium p-5 text-sm text-zinc-300 whitespace-pre-line" data-testid="tournament-rules">{tr.rules || t("no_rules")}</div>
           </section>
           <aside>
-            <h2 className="section-title"><Users className="h-3.5 w-3.5" />{t("registered_teams")} ({tr.registeredTeams?.length || 0})</h2>
-            {tr.registeredTeams?.length ? <div className="space-y-2" data-testid="tournament-registered-teams">{tr.registeredTeams.map((x, i) => <Link key={x.id} to={`/teams/${x.id}`} data-testid={`registered-team-${x.id}`} className="card-elysium p-2.5 flex items-center gap-3"><span className="font-display text-xs text-[#D8CA82] w-5">{i + 1}</span><Avatar src={x.logo} name={x.name} size="h-8 w-8" /><span className="text-sm text-white truncate">{x.name}</span><span className="ml-auto text-[10px] text-zinc-500">{x.region}</span></Link>)}</div>
+            <h2 className="section-title"><Users className="h-3.5 w-3.5" />{t("registered_teams")} ({registeredTeams.length})</h2>
+            {registeredTeams.length ? <div className="space-y-2" data-testid="tournament-registered-teams">{registeredTeams.map((x, i) => <Link key={x.id} to={`/teams/${x.id}`} data-testid={`registered-team-${x.id}`} className="card-elysium p-2.5 flex items-center gap-3"><span className="font-display text-xs text-[#D8CA82] w-5">{i + 1}</span><Avatar src={x.logo} name={x.name} size="h-8 w-8" /><span className="text-sm text-white truncate">{x.name}</span><span className="ml-auto text-[10px] text-zinc-500">{x.region}</span></Link>)}</div>
               : <p className="text-xs text-zinc-500" data-testid="empty-registered-teams">{t("no_registered_teams")}</p>}
           </aside>
         </div>
@@ -120,7 +124,7 @@ export default function TournamentDetail() {
         matches.loading ? <Skeletons n={2} /> : matches.data.length === 0 ? <EmptyState icon={GitBranch} title={t("bracket_not_generated")} description={isOrg ? t("bracket_not_generated_org") : t("bracket_not_generated_desc")} testId="empty-bracket" />
           : tab === "bracket" ? (
             <div className="space-y-8">
-              {tr.format === "single_elim" ? <EliminationBracket matches={matches.data} rounds={tr.rounds} tournament={tr} onOpen={setActiveMatch} /> : <Standings teams={tr.registeredTeams} matches={matches.data} />}
+              {tr.format === "single_elim" ? <EliminationBracket matches={matches.data} rounds={tr.rounds} tournament={tr} onOpen={setActiveMatch} /> : <Standings teams={registeredTeams} matches={matches.data} />}
               {tr.format !== "single_elim" && <RoundsList matches={matches.data} tournament={tr} onOpen={setActiveMatch} />}
             </div>
           ) : <RoundsList matches={matches.data} tournament={tr} onOpen={setActiveMatch} />
@@ -130,7 +134,7 @@ export default function TournamentDetail() {
         <div className="space-y-6" data-testid="organizer-panel">
           <div className="card-elysium card-official p-5 flex flex-wrap items-center gap-4">
             <div className="flex-1 min-w-[200px]"><div className="font-display text-sm uppercase text-white">{t("organizer_tools")}</div><p className="text-xs text-zinc-400 mt-1">{t("organizer_tools_desc")}</p></div>
-            {tr.status === "registration" && <button data-testid="start-tournament-button" onClick={start} disabled={busy || (tr.registeredTeams?.length || 0) < 2} className="btn-gold text-xs"><Play className="h-4 w-4" />{t("start_tournament")} ({tr.registeredTeams?.length || 0})</button>}
+            {tr.status === "registration" && <button data-testid="start-tournament-button" onClick={start} disabled={busy || registeredTeams.length < 2} className="btn-gold text-xs"><Play className="h-4 w-4" />{t("start_tournament")} ({registeredTeams.length})</button>}
             {tr.status === "ongoing" && tr.format === "swiss" && allDone && <button data-testid="next-round-button" onClick={nextSwiss} disabled={busy} className="btn-outline text-xs">{t("generate_next_round")}</button>}
             {tr.status === "ongoing" && allDone && <button data-testid="finish-tournament-button" onClick={finish} disabled={busy} className="btn-gold text-xs"><Crown className="h-4 w-4" />{t("finish_tournament")}</button>}
           </div>
@@ -151,7 +155,7 @@ export default function TournamentDetail() {
         <DialogContent className="bg-[#181818] border-white/10 rounded-none" data-testid="register-team-dialog">
           <DialogHeader><DialogTitle className="font-display uppercase text-white">{t("choose_team_to_register")}</DialogTitle></DialogHeader>
           <div className="space-y-2">
-            {eligible.map((x) => <button key={x.id} data-testid={`register-team-option-${x.id}`} onClick={() => setPick(x.id)} className={`w-full flex items-center gap-3 p-3 border text-left transition-colors ${(pick || eligible[0].id) === x.id ? "border-[#D8CA82] bg-[#D8CA82]/10" : "border-white/10 hover:border-white/30"}`}><Avatar src={x.logo} name={x.name} size="h-9 w-9" /><div><div className="text-sm text-white font-semibold">{x.name}</div><div className="text-[10px] text-zinc-500 uppercase">{x.region} · {x.memberIds?.length} {t("members")}</div></div></button>)}
+            {eligible.map((x) => <button key={x.id} data-testid={`register-team-option-${x.id}`} onClick={() => setPick(x.id)} className={`w-full flex items-center gap-3 p-3 border text-left transition-colors ${(pick || eligible[0].id) === x.id ? "border-[#D8CA82] bg-[#D8CA82]/10" : "border-white/10 hover:border-white/30"}`}><Avatar src={x.logo} name={x.name} size="h-9 w-9" /><div><div className="text-sm text-white font-semibold">{x.name}</div><div className="text-[10px] text-zinc-500 uppercase">{x.region} · {asList(x.memberIds).length} {t("members")}</div></div></button>)}
           </div>
           <button data-testid="register-team-confirm" onClick={register} disabled={busy} className="btn-gold w-full">{t("confirm_registration")}</button>
         </DialogContent>

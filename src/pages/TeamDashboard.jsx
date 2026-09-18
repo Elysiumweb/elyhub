@@ -8,7 +8,7 @@ import { useI18n } from "@/i18n";
 import { useCollection } from "@/hooks/useFirestore";
 import { useGames } from "@/hooks/useGames";
 import { addTeamMember, removeTeamMember, updateApplication, updateTeam, archiveTeam, deleteTeam, findOrCreateConversation } from "@/lib/db";
-import { teamGames, buildSchedule, scheduleToForm } from "@/lib/profile";
+import { teamGames, buildSchedule, scheduleToForm, asList } from "@/lib/profile";
 import { Avatar, OfferCard, ScrimCard, TournamentCard } from "@/components/common/Cards";
 import { GameBadge, StatusBadge } from "@/components/common/Badges";
 import { EmptyState, PageTitle, Skeletons, Field } from "@/components/common/States";
@@ -38,7 +38,7 @@ function TeamSettings({ team }) {
       region: team.region || "EU",
       logo: team.logo || null,
       description: team.description || "",
-      languages: team.languages || ["fr"],
+      languages: asList(team.languages).length ? asList(team.languages) : ["fr"],
       gameIds: teamGames(team),
       teamType: team.teamType || "",
       website: team.website || "",
@@ -51,10 +51,14 @@ function TeamSettings({ team }) {
 
   if (!f) return null;
   const patch = (obj) => setF((prev) => ({ ...prev, ...obj }));
-  const toggleLang = (l) => patch({ languages: f.languages.includes(l) ? f.languages.filter((x) => x !== l) : [...f.languages, l] });
+  // asList : tolérance aux valeurs legacy malformées (string au lieu de list).
+  const toggleLang = (l) => {
+    const langs = asList(f.languages);
+    patch({ languages: langs.includes(l) ? langs.filter((x) => x !== l) : [...langs, l] });
+  };
   const toggleTrainDay = (d) => {
-    const days = f.training.days.includes(d) ? f.training.days.filter((x) => x !== d) : [...f.training.days, d];
-    patch({ training: { ...f.training, days } });
+    const days = asList(f.training?.days);
+    patch({ training: { ...f.training, days: days.includes(d) ? days.filter((x) => x !== d) : [...days, d] } });
   };
 
   const save = async (e) => {
@@ -268,8 +272,8 @@ export default function TeamDashboard() {
       {tab === "members" && team && (
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 grid sm:grid-cols-2 gap-2" data-testid="dashboard-members">
-            {(team.members || []).map((m) => (
-              <div key={m.uid} className="card-elysium p-3 flex items-center gap-3">
+            {asList(team.members).map((m, i) => (
+              <div key={m.uid || i} className="card-elysium p-3 flex items-center gap-3">
                 <Avatar src={m.avatar} name={m.pseudo} round />
                 <div className="flex-1 min-w-0"><Link to={`/players/${m.uid}`} className="text-sm font-semibold text-white truncate block hover:text-[#D8CA82]">{m.pseudo}</Link><div className="text-[10px] uppercase tracking-wider text-[#D8CA82]">{m.role}{m.uid === team.ownerId && " · " + t("captain")}</div></div>
                 {isOwner && m.uid !== team.ownerId && <button data-testid={`remove-member-${m.uid}`} onClick={() => removeTeamMember(team.id, m).catch(() => toast.error(t("err_generic")))} className="btn-ghost h-8 w-8 p-0 text-red-400"><Trash2 className="h-4 w-4" /></button>}

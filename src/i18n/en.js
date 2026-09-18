@@ -218,8 +218,16 @@ export const en = {
   minor_dm_restricted: "Messaging restricted for minor accounts.", image_attachment: "Image",
 
   // ── Admin & modération ──
-  admin_desc: "Validate games proposed by the community and handle reports.",
-  admin_tab_games: "Game requests", admin_tab_reports: "Reports",
+  admin_desc: "Manage new game requests, reports and accounts (roles, bans).",
+  admin_tab_games: "Game requests", admin_tab_reports: "Reports", admin_tab_users: "Users",
+  // Users (admin tab)
+  users_search_placeholder: "Search (pseudo, e-mail, UID)…", user_count: "{n} account(s)",
+  no_users: "No accounts", no_users_desc: "Accounts registered on ElyHub will show up here.",
+  users_perm_title: "Account listing refused", users_perm_desc: "Listing the users collection requires the admin/moderator role in Firestore (users collection → role field of your document) and the updated security rules deployed.",
+  user_role: "Role", role_admin: "Admin", role_moderator: "Moderator", role_player: "Player",
+  role_saved: "Role updated", joined: "Joined",
+  user_banned_msg: "Account suspended", user_unbanned_msg: "Account restored", user_deleted: "Account deleted",
+  delete_user_confirm: "Permanently delete {name}'s account? Public profile and private data will be erased (GDPR).",
   admin_filter_open: "Open", admin_filter_treated: "Treated", admin_filter_all: "All",
   no_reports_desc: "User reports (content, conversations) will show up here.",
   reported_by: "Reported by", resolve_report: "Mark resolved", dismiss_report: "Dismiss",

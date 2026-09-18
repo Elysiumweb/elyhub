@@ -4,7 +4,7 @@ import { useGames } from "@/hooks/useGames";
 import { useI18n } from "@/i18n";
 import { GameBadge, OfficialBadge, StatusBadge } from "./Badges";
 import { cn } from "@/lib/utils";
-import { isVerified } from "@/lib/profile";
+import { asList, isVerified } from "@/lib/profile";
 import { countryLabel } from "@/lib/constants";
 import { isOfficialItem } from "@/lib/db";
 
@@ -38,7 +38,7 @@ export const TeamCard = ({ team }) => {
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-zinc-400">
             <GameBadge game={g} />
             <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{team.region}</span>
-            <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{team.memberIds?.length || 0} {t("members").toLowerCase()}</span>
+            <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{asList(team.memberIds).length} {t("members").toLowerCase()}</span>
           </div>
           {team.description && <p className="mt-2 text-xs text-zinc-500 line-clamp-2">{team.description}</p>}
         </div>
@@ -111,7 +111,7 @@ export const TournamentCard = ({ tournament: tr }) => {
   const { t, formatDate } = useI18n();
   const g = getGame(tr.gameId);
   const official = isOfficialItem(tr);
-  const left = (tr.slots || 0) - (tr.registeredTeamIds?.length || 0);
+  const left = (Number(tr.slots) || 0) - asList(tr.registeredTeamIds).length;
   return (
     <Shell to={`/tournaments/${tr.id}`} official={official} color={g.color} testId={`tournament-card-${tr.id}`}>
       <div className="flex items-start justify-between gap-3">
@@ -153,7 +153,7 @@ export const PlayerCard = ({ player }) => {
         </h3>
         <div className="mt-1 flex flex-wrap gap-1.5 text-xs text-zinc-400">
           <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{player.region}{country && ` · ${country}`}</span>
-          {(player.games || []).slice(0, 3).map((id) => <GameBadge key={id} game={getGame(id)} />)}
+          {asList(player.games).slice(0, 3).map((id) => <GameBadge key={id} game={getGame(id)} />)}
         </div>
       </div>
     </Link>

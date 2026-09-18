@@ -218,8 +218,16 @@ export const fr = {
   minor_dm_restricted: "Messagerie restreinte pour les comptes mineurs.", image_attachment: "Image",
 
   // ── Admin & modération ──
-  admin_desc: "Validez les jeux proposés par la communauté et traitez les signalements.",
-  admin_tab_games: "Demandes de jeux", admin_tab_reports: "Signalements",
+  admin_desc: "Gérez les demandes de nouveaux jeux, les signalements et les comptes (rôles, suspensions).",
+  admin_tab_games: "Demandes de jeux", admin_tab_reports: "Signalements", admin_tab_users: "Utilisateurs",
+  // Utilisateurs (onglet admin)
+  users_search_placeholder: "Rechercher (pseudo, e-mail, UID)…", user_count: "{n} compte(s)",
+  no_users: "Aucun compte", no_users_desc: "Les comptes enregistrés sur ElyHub apparaîtront ici.",
+  users_perm_title: "Lecture des comptes refusée", users_perm_desc: "La lecture de la collection users exige le rôle admin/modérateur dans Firestore (collection users → champ role de votre document) puis le déploiement des règles mises à jour.",
+  user_role: "Rôle", role_admin: "Admin", role_moderator: "Modérateur", role_player: "Joueur",
+  role_saved: "Rôle mis à jour", joined: "Inscrit le",
+  user_banned_msg: "Compte suspendu", user_unbanned_msg: "Compte rétabli", user_deleted: "Compte supprimé",
+  delete_user_confirm: "Supprimer définitivement le compte de {name} ? Profil public et données privées seront effacés (RGPD).",
   admin_filter_open: "Ouverts", admin_filter_treated: "Traités", admin_filter_all: "Tous",
   no_reports_desc: "Les signalements des utilisateurs (contenus, conversations) apparaîtront ici.",
   reported_by: "Signalé par", resolve_report: "Marquer résolu", dismiss_report: "Classer sans suite",

@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { createGame } from "@/lib/db";
 import { useI18n } from "@/i18n";
 import { GameBadge, PendingBadge } from "./Badges";
+import { asList } from "@/lib/profile";
 
 // Searchable game picker with inline "create game" (pending validation)
 export const GameSelector = ({ value, onChange, multiple = false, allowCreate = true, testId = "game-selector" }) => {
@@ -13,7 +14,9 @@ export const GameSelector = ({ value, onChange, multiple = false, allowCreate = 
   const { user, profile } = useAuth();
   const { t } = useI18n();
   const [q, setQ] = useState("");
-  const selected = multiple ? value || [] : value ? [value] : [];
+  // asList : une valeur legacy non-liste (ex. chaîne "valorant,lol") ne doit
+  // pas faire crasher .includes/.filter à la sélection.
+  const selected = multiple ? asList(value) : value ? [value] : [];
 
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();

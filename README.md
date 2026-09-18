@@ -78,10 +78,12 @@ firebase deploy --only firestore:rules,firestore:indexes,storage
 
 ### Panel admin & rôles
 
-Le compte administrateur dispose d'un panel (`/admin`, onglets **Demandes de jeux**
-et **Signalements**) : validation/refus/suppression des jeux proposés par la
-communauté, traitement des signalements (résoudre, classer, supprimer le contenu
-signalé, supprimer le signalement).
+Le compte administrateur dispose d'un panel (`/admin`, onglets **Demandes de
+jeux**, **Signalements** et **Utilisateurs**) : validation/refus/suppression des
+jeux proposés par la communauté, traitement des signalements (résoudre, classer,
+supprimer le contenu signalé, supprimer le signalement) et gestion des comptes
+(rôle admin/modérateur/joueur, suspension/rétablissement, suppression RGPD).
+Chaque action est tracée dans la collection `modlog`.
 
 - Autorisation côté Firestore : champ `role` = `admin` (ou `moderator`) sur
   `users/{uid}`. **Bootstrap du premier admin** : la variable `ADMIN_UID`
@@ -89,6 +91,13 @@ signalé, supprimer le signalement).
   exigent le champ `role` — ajoutez-le une fois dans la console Firebase
   (Firestore → `users/{uid}` → `role: "admin"`). Le panel affiche l'UID à
   modifier et la marche à suivre tant que ce champ est absent.
+- **UID par défaut** : à défaut de variable `ADMIN_UID`, le compte
+  `Yztk8XFHteYwiwTGCfpnp71lmql1` (compte Elysium) est reconnu comme
+  administrateur — mise en avant de ses contenus et accès au panel inclus.
+  Surchargez via l'env si nécessaire.
+- **L'onglet Utilisateurs** lit la collection `users` (règle `allow list:
+  isMod()`) : après un changement de ces règles, redéployez-les avec
+  `firebase deploy --only firestore:rules,firestore:indexes,storage`.
 - **Mise en avant** : tous les contenus du compte administrateur (annonces,
   offres, scrims, tournois, LFT, équipe, fiche joueur) sont « officiels » et
   remontent en tête des listes (accueil, annuaires, hubs) avec le badge Officiel.

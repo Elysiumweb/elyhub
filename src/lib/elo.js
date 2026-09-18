@@ -1,4 +1,6 @@
 // Classement ELO des équipes, calculé depuis les résultats de matchs et de scrims.
+import { asList } from "./profile";
+
 export const ELO_INITIAL = 1200;
 
 const expected = (a, b) => 1 / (1 + Math.pow(10, (b - a) / 400));
@@ -25,6 +27,7 @@ export const applyMatchToElo = (teamA, teamB, scoreA, scoreB) => {
   };
 };
 
-// Ordre de seeding d'une liste d'équipes (ELO décroissant, puis date de création)
+// Ordre de seeding d'une liste d'équipes (ELO décroissant, puis date de création).
+// asList : une valeur legacy non-liste ne doit pas faire crasher le spread.
 export const seedTeams = (teams) =>
-  [...teams].sort((a, b) => (b.elo ?? ELO_INITIAL) - (a.elo ?? ELO_INITIAL) || (a.createdAt || 0) - (b.createdAt || 0));
+  asList(teams).sort((a, b) => (b.elo ?? ELO_INITIAL) - (a.elo ?? ELO_INITIAL) || (a.createdAt || 0) - (b.createdAt || 0));

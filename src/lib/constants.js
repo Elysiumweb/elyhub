@@ -2,7 +2,13 @@
 // remplacés par webpack au build — une clé calculée ne serait jamais injectée).
 // ⚠️ ADMIN_UID n'est qu'un *bootstrap* (premier admin) : l'autorisation réelle repose sur
 // le champ `role` du document users/{uid} (admin | moderator), contrôlé par firestore.rules.
-export const ADMIN_UID = process.env.REACT_APP_ADMIN_UID || process.env.ADMIN_UID || "";
+// La valeur par défaut est le compte administrateur Elysium : même si la variable
+// d'environnement n'est pas (plus) posée sur le déploiement, les contenus de ce compte
+// (annonces, équipe, fiche joueur) restent « officiels » et le panel admin reste visible.
+export const ADMIN_UID =
+  process.env.REACT_APP_ADMIN_UID ||
+  process.env.ADMIN_UID ||
+  "Yztk8XFHteYwiwTGCfpnp71lmql1";
 
 export const REGIONS = ["EU", "NA", "ASIA", "LATAM", "OCE", "MENA"];
 export const LANGUAGES = ["fr", "en", "de", "es", "pt", "it"];

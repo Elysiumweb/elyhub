@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useI18n } from "@/i18n";
+import { asList } from "@/lib/profile";
 
 const SITE = "ElyHub";
 const DEFAULT_DESC = "ElyHub · la plateforme esport d'Elysium : équipes, recrutement, scrims et tournois en France et en Europe.";
@@ -71,7 +72,7 @@ export const ldTeam = (team, g) => ({
   url: `${BASE}/teams/${team.id}`,
   sport: g?.name || "Esports",
   logo: team.logo || null,
-  member: (team.members || []).map((m) => ({ "@type": "Person", name: m.pseudo })),
+  member: asList(team.members).map((m) => ({ "@type": "Person", name: m.pseudo })),
   ...(team.founded && { foundingDate: String(team.founded) }),
   ...(team.country && { location: { "@type": "Country", name: team.country } }),
 });
