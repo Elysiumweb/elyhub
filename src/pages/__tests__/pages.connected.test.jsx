@@ -35,6 +35,7 @@ import GameHub from "@/pages/GameHub";
 import News, { NewsDetail } from "@/pages/News";
 import Events from "@/pages/Events";
 import Glossary from "@/pages/Glossary";
+import { Navbar } from "@/components/layout/Navbar";
 
 // ── Mocks Firebase (hoistés par babel-jest avant les imports ci-dessus) ─────
 // Simule le build de production : ADMIN_UID est injecté par webpack (DefinePlugin).
@@ -191,5 +192,102 @@ const renderPage = async (path, pattern, element) => {
 describe("rendu connecté (données Firestore factices, admin connecté)", () => {
   it.each(ROUTES)("%s rend sans exception", async (path, pattern, element) => {
     await expect(renderPage(path, pattern, element)).resolves.toBeTruthy();
+  });
+});
+
+// ── Régressions : crash « o is not a function » + règles conversations ──────
+describe("messagerie : robustesse (régression « o is not a function »)", () => {
+  const renderMessages = async (path) => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <I18nProvider>
+          <AuthProvider>
+            <GamesProvider>
+              <MemoryRouter initialEntries={[path]}>
+                <Routes>
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/messages/:id" element={<Messages />} />
+                </Routes>
+              </MemoryRouter>
+            </GamesProvider>
+          </AuthProvider>
+        </I18nProvider>,
+      );
+    });
+    await act(async () => { await Promise.resolve(); });
+    return { container, root };
+  };
+
+  it("Thread : scrollIntoView renvoyant une Promise (polyfill/extension) ne casse plus la page", async () => {
+    // Environnement hostile : une extension/un polyfill fait renvoyer une
+    // Promise par scrollIntoView(). Avant le correctif, l'effet Thread renvoyait
+    // cette valeur EN L'ÉTAT comme cleanup : React 19 l'invoquait tel quel au
+    // démontage → TypeError « … is not a function » → ErrorBoundary.
+    const hostile = jest.fn(() => Promise.resolve());
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = hostile;
+    const errors = [];
+    const spy = jest.spyOn(console, "error").mockImplementation((...a) => {
+      errors.push(a.map((x) => String(x)).join(" "));
+    });
+    let ctx;
+    try {
+      ctx = await renderMessages("/messages/c1");
+      expect(ctx.container.querySelector('[data-testid="message-thread"]')).toBeTruthy();
+      expect(hostile).toHaveBeenCalled();
+      // Démontage (ou changement de conversation) : l'ancien code appelait
+      // ici la Promise comme cleanup et crashait.
+      await act(async () => { ctx.root.unmount(); });
+    } finally {
+      Element.prototype.scrollIntoView = original;
+      spy.mockRestore();
+    }
+    await act(async () => { await Promise.resolve(); });
+    const crash = errors.filter((e) => e.includes("not a function") || e.includes("The above error occurred"));
+    expect(crash).toEqual([]);
+  });
+
+  it("Navbar : le compteur de messages non lus ne liste QUE les conversations de l'utilisateur", async () => {
+    const { __subs } = require("../../__mocks__/fakeFirestore");
+    __subs.length = 0;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <I18nProvider>
+          <AuthProvider>
+            <FiltersProvider>
+              <GamesProvider>
+                <NotificationsProvider>
+                  <TooltipProvider>
+                    <MemoryRouter>
+                      <Navbar />
+                    </MemoryRouter>
+                  </TooltipProvider>
+                </NotificationsProvider>
+              </GamesProvider>
+            </FiltersProvider>
+          </AuthProvider>
+        </I18nProvider>,
+      );
+    });
+    await act(async () => { await Promise.resolve(); });
+    await act(async () => { root.unmount(); });
+    container.remove();
+
+    // Les règles Firestore refusent tout list de conversations sans filtre
+    // participant : chaque abonnement `conversations` doit donc porter la
+    // contrainte where(participantIds, array-contains, uid).
+    const convSubs = __subs.filter((s) => s.path === "conversations");
+    expect(convSubs.length).toBeGreaterThan(0);
+    for (const s of convSubs) {
+      expect(s.constraints).toEqual(
+        expect.arrayContaining([expect.objectContaining({ kind: "where", field: "participantIds" })]),
+      );
+    }
   });
 });
