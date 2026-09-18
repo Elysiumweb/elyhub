@@ -68,6 +68,9 @@ __seed({
   ["notifications/n1"]: { recipientId: ADMIN_UID, type: "team_invite_accepted", params: { name: "ninja", team: "Elysium One" }, link: "/teams/t-off", read: false, createdAt: NOW - 2e7 },
   ["conversations/c1"]: { participantIds: [ADMIN_UID, "user2"], participants: { [ADMIN_UID]: { name: "ElysiumAdmin" }, user2: { name: "ninja" } }, type: "player_team", title: "Recrutement", lastMessage: "Salut !", lastAt: NOW - 1e7, lastSenderId: "user2", lastReadAt: {}, blockedBy: [], archivedBy: [], createdAt: NOW - 5e7 },
   ["conversations/c1/messages/m1"]: { senderId: "user2", senderName: "ninja", text: "Salut !", createdAt: NOW - 1e7 },
+  // c2 : l'admin n'y participe PAS — la query du badge navbar (where participantIds
+  // array-contains uid) ne doit pas la compter (badge attendu : 1, pas 2).
+  ["conversations/c2"]: { participantIds: ["user2", "user3"], participants: { user2: { name: "ninja" }, user3: { name: "ghost" } }, type: "player_team", title: "Entre autres", lastMessage: "Hey", lastAt: NOW - 1e7, lastSenderId: "user3", lastReadAt: {}, blockedBy: [], archivedBy: [], createdAt: NOW - 4e7 },
   ["applications/a1"]: { offerId: "of-off", offerRole: "Duelist", teamId: "t-off", teamName: "Elysium One", gameId: "valorant", ownerId: ADMIN_UID, playerId: "user2", playerPseudo: "ninja", message: "Je suis motivé", status: "sent", createdAt: NOW - 9e6 },
   ["news/nw1"]: { title: "Lancement d'ElyHub", excerpt: "La plateforme est en ligne.", body: "Contenu.", authorId: ADMIN_UID, status: "published", publishedAt: NOW - 8e6, createdAt: NOW - 8e6 },
   ["events/ev1"]: { name: "LAN Elysium", location: "Paris", date: "2026-11-01", url: "", ownerId: ADMIN_UID, createdAt: NOW - 7e6 },
@@ -120,6 +123,9 @@ describe("application complète connectée (admin)", () => {
     expect(container.querySelector('[data-testid="hero-scrims-button"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="footer"]')).toBeTruthy();
     expect(container.innerHTML).toContain("Elysium One"); // annonce officielle de l'admin
+    // Badge non-lus : la query navbar est bornée aux conversations de l'admin
+    // (c1 seulement, c2 est exclue) → exactement 1 non-lu.
+    expect(container.querySelector('[data-testid="messages-badge"]')?.textContent).toBe("1");
   });
 
   it("navigation vers /teams, /players, /admin, /account sans crash", async () => {

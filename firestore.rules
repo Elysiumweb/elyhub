@@ -143,17 +143,30 @@ service cloud.firestore {
 
     // ─────────────────────────────────────────────────────────────
     // Candidatures
+    // NB « règles ≠ filtres » : un `list` n'est autorisé que si la QUERY démontre
+    // elle-même que tous les résultats possibles satisfont la règle. `request.query.limit
+    // <= 100` seul refusait les requêtes sans limit (null <= 100 → erreur) ET, avec un
+    // limit, exposait TOUTES les candidatures à n'importe quel compte connecté.
+    // Chaque disjonct du `list` est démontrable par le where correspondant de l'app :
+    //   where("playerId", "==", uid)  → le candidat lui-même
+    //   where("ownerId",  "==", uid)  → l'owner de l'équipe (ownerId est copié de
+    //                                    l'offre, elle-même copié de team.ownerId)
     // ─────────────────────────────────────────────────────────────
     match /applications/{id} {
       allow get: if signedIn() && (resource.data.playerId == request.auth.uid || resource.data.ownerId == request.auth.uid) || isMod();
-      allow list: if signedIn() && (request.query.limit <= 100);
+      allow list: if signedIn() && (resource.data.playerId == request.auth.uid || resource.data.ownerId == request.auth.uid);
       allow create: if signedIn() && request.resource.data.playerId == request.auth.uid;
-      allow update: if signedIn() && (resource.data.playerId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+      // isOwnerOfTeam couvre les docs hérités sans ownerId à jour : sur une mise à
+      // jour unitaire le get() est sûr (le document est connu).
+      allow update: if signedIn() && (resource.data.playerId == request.auth.uid || resource.data.ownerId == request.auth.uid || isOwnerOfTeam(resource.data.teamId));
       allow delete: if isMod();
     }
 
     // ─────────────────────────────────────────────────────────────
     // Messagerie (privée)
+    // NB « règles ≠ filtres » : le `list` n'est autorisé que si la query démontre la
+    // participation — l'app doit donc toujours utiliser
+    // where("participantIds", "array-contains", uid) (voir Navbar, Messages, lib/db).
     // ─────────────────────────────────────────────────────────────
     match /conversations/{id} {
       allow get, list: if isParticipant();

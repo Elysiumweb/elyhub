@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { limit } from "firebase/firestore";
+import { limit, where } from "firebase/firestore";
 import { MessageSquare, LogOut, User, LayoutDashboard, ShieldCheck, Menu, Search } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/i18n";
@@ -25,7 +25,11 @@ export const Navbar = () => {
   const [open, setOpen] = useState(false);
 
   // Badge de messages non lus : compteur `unread` par participant (lastAt > lastReadAt[moi]).
-  const convs = useCollection("conversations", [limit(100)], [], !!user);
+  // Le where participant est OBLIGATOIRE : les règles Firestore exigent que la query
+  // prouve la participation (un list sans where sur `conversations` est refusé —
+  // « Missing or insufficient permissions »). Cela filtre aussi sur MES conversations,
+  // comme le veut le calcul d'`unread` ci-dessous.
+  const convs = useCollection("conversations", [where("participantIds", "array-contains", user?.uid), limit(100)], [user?.uid], !!user);
   const unread = convs.data.filter((c) => (c.lastAt || 0) > (c.lastReadAt?.[user?.uid] || 0) && c.lastSenderId !== user?.uid).length;
 
   const NavItems = ({ onClick }) => (

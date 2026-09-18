@@ -209,7 +209,9 @@ export default function TeamDashboard() {
   const isOwner = team?.ownerId === user?.uid;
 
   const offers = useCollection("offers", [where("teamId", "==", teamId || "-")], [teamId], !!teamId);
-  const apps = useCollection("applications", [where("teamId", "==", teamId || "-")], [teamId], !!teamId && isOwner);
+  // where("ownerId", "==", uid) est exigé par les règles Firestore : la query doit
+  // démontrer elle-même le droit d'accès (un list sur `teamId` seul serait refusé).
+  const apps = useCollection("applications", [where("ownerId", "==", user?.uid || "-"), where("teamId", "==", teamId || "-")], [teamId, user?.uid], !!teamId && isOwner);
   const scrims = useCollection("scrims", [], [], !!teamId);
   const tournaments = useCollection("tournaments", [where("registeredTeamIds", "array-contains", teamId || "-")], [teamId], !!teamId);
   const teamScrims = scrims.data.filter((s) => s.teamId === teamId || s.opponentTeamId === teamId).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
